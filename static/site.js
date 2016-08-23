@@ -7,22 +7,21 @@ myApp.config(function($routeProvider) {
 		controller  : 'FormListController'
 	})
 
-	.when('/formList', {
+	.when('/form/list', {
 		templateUrl : 'pages/formList.html',
 		controller  : 'FormListController'
 	})
-
-	.when('/form/:id', {
-		templateUrl : 'pages/form.html',
-		controller  : 'FormController'
-	})
-	.when('/edit/:id', {
+	.when('/form/edit/:id', {
 		templateUrl : 'pages/formEdit.html',
 		controller  : 'FormEditController'
+	})
+	.when('/form/fill/:id', {
+		templateUrl : 'pages/form.html',
+		controller  : 'FormController'
 	});
 });
 
-myApp.controller('FormEditController', ['$scope', '$http', function($scope, $http) {
+myApp.controller('FormEditController', ['$scope', '$http', '$location', function($scope, $http, $location) {
 	$scope.form = {fields: [], name: "", submissions: []};
 	
 
@@ -39,14 +38,9 @@ myApp.controller('FormEditController', ['$scope', '$http', function($scope, $htt
 	}
 
 	$scope.submitNewForm = function(){
-		$http({
-		    method: 'POST',
-		    url: '/newForm',
-		    data: {form: "for"},
-		    headers: {'Content-Type': 'application/x-www-form-urlencoded'}
-		}).then(function(res){
-			
-
+		$http.post('/form/new', {form: $scope.form})
+		.then(function(res){
+			$location.path( "/form/list" );
 		});
 	}
 }]);
@@ -55,7 +49,7 @@ myApp.controller('FormListController', ['$scope', '$http', function($scope, $htt
 	$scope.formsList = {};
 
 	$scope.loadFormList = function(){
-		$http.get('/formlist').then(function(res){
+		$http.get('/homepage').then(function(res){
 			$scope.formsList = res.data;
 		});
 	}
@@ -63,13 +57,25 @@ myApp.controller('FormListController', ['$scope', '$http', function($scope, $htt
 	$scope.loadFormList();
 }]);
 
-myApp.controller('FormController', ['$scope', '$http', '$routeParams', function($scope, $http, $routeParams) {
+myApp.controller('FormController', ['$scope', '$http', '$routeParams', '$location', function($scope, $http, $routeParams, $location) {
 	$scope.form = {};
 	$scope.formID = $routeParams.id;
 
 	$scope.loadForm = function(){
-		$http.get('/getForm/'+$scope.formID).then(function(res){
+		$http.get('/form/get/'+$scope.formID).then(function(res){
 			$scope.form = res.data;
+			console.log(res.data);
+		});
+	}
+
+	$scope.submitForm = function(){
+		var submission = [];
+		for(var i = 0; i<$scope.form.fields.length; i++){
+			submission[i] = $scope.form.fields[i].value;
+		}
+		$http.post('/form/submit', {formID: $scope.formID, submission: submission})
+		.then(function(res){
+			$location.path( "/form/list" );
 		});
 	}
 
@@ -77,5 +83,5 @@ myApp.controller('FormController', ['$scope', '$http', '$routeParams', function(
 }]);
 
 myApp.controller('mainController', function($scope) {
-	$scope.a = "herca hecalee";
+
 });

@@ -3,9 +3,21 @@ var express = require('express');
 var webServer = express();
 var fs = require("fs");
 var database = "db.json";
-var bodyParser = require('body-parser')
+var bodyParser = require('body-parser');
+var morgan = require('morgan');
+var shortid = require('shortid');
+var _ = require('lodash');
+
+
+for(var i=0; i<0; i++){
+	console.log(shortid.generate());
+}
 
 var forms;
+
+webServer.use(morgan("-----------\\n:method  :url\\n-----------\\nRES-TIME: :response-time ms\\nREMOTE-ADDRESS: :remote-addr\\n-----------\\n\\n"));
+webServer.use(bodyParser.urlencoded({ extended: false }));
+webServer.use(bodyParser.json());
 
 reloadDatabase(function(){
 	console.log(database + " loaded");
@@ -13,7 +25,7 @@ reloadDatabase(function(){
 		console.log('HTTP server listening on port 3000!');
 	});
 });
--
+
 function saveDatabase(callback){
 	fs.writeFile(database, JSON.stringify({"forms": forms}, null, "\t"), "utf8", callback);
 }
@@ -24,41 +36,31 @@ function reloadDatabase(callback){
 	callback();
 }
 
-
-webServer.get('/formlist', function (req, res) {
+webServer.get('/homepage', function(req, res) {
 	var build = {};
 	for(var formKey in forms){
 		build[formKey] = {name: forms[formKey].name};
 	}
-	logRequest("Formlist", build);
 	res.send(build);
 });
 
-webServer.get('/getForm/:id', function (req, res) {
-	var body = forms[req.params.id];
-	logRequest("Form "+ req.params.id, body);
-	res.send(forms[req.params.id]);
+webServer.get('/form/get/:id', function(req, res) {
+	var form = _.pick(forms[req.params.id], ['name', 'fields']);
+	res.send(form);
 });
 
-webServer.post('/newForm', function (req, res) {
-	console.log(req.body);
-	var body = forms[req.params.id];
-	logRequest("New form submission "+ req.params.id, body);
-	res.send(forms[req.params.id]);
+webServer.post('/form/new', function(req, res) {
+	var form = req.body.form;
+	form.submissions = [];
+	forms[shortid.generate()] = form;
+	res.send();
+	saveDatabase();
 });
 
-var requestID = 0;
-function logRequest(name, data){
-	console.log("------------------");
-	console.log(requestID + ": Request for " + name);
-	console.log("------------------");
-	console.log(JSON.stringify(data, null, 2));
-	console.log("------------------");
-	requestID +=1;
-}
+webServer.post('/form/submit', function(req, res) {
+	forms[req.body.formID].submissions[forms[req.body.formID].submissions.length] = req.body.submission;
+	res.send();
+	saveDatabase();
+});
 
 webServer.use(express.static('static'));
-webServer.use(bodyParser.json()); // support json encoded bodies
-webServer.use(bodyParser.urlencoded({extended: true})); // support encoded bodies
-
-
