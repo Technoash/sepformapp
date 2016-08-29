@@ -1,0 +1,26 @@
+<div class="row homeRow">
+	<div class="col-sm-4">
+		<h2>Notifications</h2>
+		<div class="noteBox blue">
+			<span class="onp-sl-long">something</span>
+		</div>
+		<div class="noteBox blue">
+			<span class="onp-sl-long">something else</span>
+		</div>
+	</div>
+	<div class="col-sm-4">
+		<h2>Forms</h2>
+		<div class="noteBox red" ng-repeat="(formID, form) in formsList" go-click="form/fill/{{ formID }}">
+			<span class="onp-sl-long">{{ form.name }}</span>
+		</div>
+	</div>
+	<div class="col-sm-4">
+		<h2>Submissions</h2>
+		<div class="noteBox orange">
+			<span class="onp-sl-long">hi lol</span>
+		</div>
+		<div class="noteBox orange">
+			<span class="onp-sl-long">ayy</span>
+		</div>
+	</div>
+</div>

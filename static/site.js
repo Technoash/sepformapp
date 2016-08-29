@@ -3,49 +3,60 @@ var myApp = angular.module('myApp', ['ngRoute']);
 myApp.config(function($routeProvider) {
 	$routeProvider
 	.when('/', {
-		templateUrl : 'pages/formList.html',
-		controller  : 'FormListController'
-	})
-
-	.when('/form/list', {
-		templateUrl : 'pages/formList.html',
-		controller  : 'FormListController'
+		templateUrl : 'pages/home.html',
+		controller  : 'HomeController'
 	})
 	.when('/form/edit/:id', {
 		templateUrl : 'pages/formEdit.html',
-		controller  : 'FormEditController'
+		controller  : 'FormEditController',
+		new: false
+	})
+	.when('/form/new', {
+		templateUrl : 'pages/formEdit.html',
+		controller  : 'FormEditController',
+		new: true
 	})
 	.when('/form/fill/:id', {
-		templateUrl : 'pages/form.html',
-		controller  : 'FormController'
+		templateUrl : 'pages/formFill.html',
+		controller  : 'FormFillController'
+	})
+	.when('/form/manage', {
+		templateUrl : 'pages/formManage.html',
+		controller  : 'FormManageController'
 	});
 });
 
-myApp.controller('FormEditController', ['$scope', '$http', '$location', function($scope, $http, $location) {
-	$scope.form = {fields: [], name: "", submissions: []};
-	
+myApp.controller('FormEditController', ['$scope', '$http', '$location', '$route', function($scope, $http, $location, $route) {
+	$scope.new = $route.current.$$route.new;
+	$scope.name = "";
+	$scope.fields = [];
 
 	$scope.addField = function(type){
-		$scope.form.fields[$scope.form.fields.length] = {
+		$scope.fields[$scope.fields.length] = {
 			type: type,
 			name: "",
-			helper: ""
+			helper: "",
+			required: false
 		}
 	}
 
 	$scope.deleteField = function(index){
-		$scope.form.fields.splice(index, 1);
+		$scope.fields.splice(index, 1);
 	}
 
 	$scope.submitNewForm = function(){
-		$http.post('/form/new', {form: $scope.form})
+		$http.post('/form/new', {fields: $scope.fields, name: $scope.name})
 		.then(function(res){
-			$location.path( "/form/list" );
+			$location.path( "/form/manage" );
 		});
+	}
+
+	$scope.updateForm = function(){
+		alert('not implemented');
 	}
 }]);
 
-myApp.controller('FormListController', ['$scope', '$http', function($scope, $http) {
+myApp.controller('HomeController', ['$scope', '$http', function($scope, $http) {
 	$scope.formsList = {};
 
 	$scope.loadFormList = function(){
@@ -57,31 +68,58 @@ myApp.controller('FormListController', ['$scope', '$http', function($scope, $htt
 	$scope.loadFormList();
 }]);
 
-myApp.controller('FormController', ['$scope', '$http', '$routeParams', '$location', function($scope, $http, $routeParams, $location) {
+
+myApp.controller('FormManageController', ['$scope', '$http', function($scope, $http) {
+	$scope.formsList = {};
+
+	$scope.loadFormList = function(){
+		$http.get('/homepage').then(function(res){
+			$scope.formsList = res.data;
+		});
+	}
+
+	$scope.loadFormList();
+}]);
+
+myApp.controller('FormFillController', ['$scope', '$http', '$routeParams', '$location', function($scope, $http, $routeParams, $location) {
 	$scope.form = {};
 	$scope.formID = $routeParams.id;
 
 	$scope.loadForm = function(){
 		$http.get('/form/get/'+$scope.formID).then(function(res){
-			$scope.form = res.data;
-			console.log(res.data);
+			$scope.form = res.data.form;
+			$scope.fields = res.data.fields;
+			for(var fieldID in  $scope.fields){
+				$scope.fields[fieldID].value = "";
+			}
 		});
 	}
 
 	$scope.submitForm = function(){
-		var submission = [];
-		for(var i = 0; i<$scope.form.fields.length; i++){
-			submission[i] = $scope.form.fields[i].value;
+		var fields = [];
+		for(var fieldID in $scope.fields){
+			fields.push({fieldID: fieldID, value: $scope.fields[fieldID].value});
 		}
-		$http.post('/form/submit', {formID: $scope.formID, submission: submission})
+		$http.post('/form/submit', {formID: $scope.formID, fields: fields})
 		.then(function(res){
-			$location.path( "/form/list" );
+			$location.path( "/" );
 		});
 	}
-
 	$scope.loadForm();
 }]);
 
-myApp.controller('mainController', function($scope) {
-
+myApp.directive( 'goClick', function($location) {
+  return function ( scope, element, attrs ) {
+    var path;
+    attrs.$observe( 'goClick', function(val) {
+    	path = val;
+    });
+    element.bind( 'click', function() {
+		scope.$apply( function() {
+			$location.path(path);
+		});
+	});
+  };
 });
+
+myApp.controller('mainController', function($scope) {});

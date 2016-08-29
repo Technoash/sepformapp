@@ -1,19 +1,22 @@
-
 <div class="row form-horizontal">
 	<div class="form-group">
 		<label class="col-sm-2 control-label">Form Title</label>
 		<div class="col-sm-5">
-			<input type="text" ng-model="form.name" class="form-control" placeholder="Field Name">
+			<input type="text" ng-model="$parent.name" class="form-control" placeholder="New Form" ng-if="new">
+			<input type="text" ng-model="$parent.name" class="form-control" placeholder="Form Title" ng-if="!new">
 		</div>
 		<div class="col-offset-sm-3 col-sm-2">
-			<button class="btn" ng-click="submitNewForm();">Create</button>
+			<button ng-if="new" class="btn" ng-click="submitNewForm();">Create</button>
+			<button ng-if="!new" class="btn" ng-click="updateForm();">Update</button>
 		</div>
 	</div>
 </div>
+
+<ng-include src="'titleBar'"></ng-include>
 <h3>Form Fields</h3>
-<h4>{{ form.fields.length }} fields</h4>
+<h4>{{ fields.length }} fields</h4>
 <button  class="btn btn-default" ng-click="addField('text');">Add field</button>
-<div class="row formEditField form-horizontal" ng-repeat="field in form.fields">
+<div class="row formEditField form-horizontal" ng-repeat="field in fields">
 	<div class="form-group">
 		<label class="col-sm-2 control-label">Type</label>
 		<div class="col-sm-10">
@@ -33,6 +36,13 @@
 		<label class="col-sm-2 control-label">Helper</label>
 		<div class="col-sm-10">
 			<input type="text" ng-model="field.helper" class="form-control" placeholder="Field Helper">
+		</div>
+	</div>
+	<div class="form-group">
+		<label class="col-sm-2 control-label"></label>
+		<div class="col-sm-10">
+			<label class="radio-inline"><input type="radio"  data-ng-model="field.required" data-ng-value="true"> Required</label>
+			<label class="radio-inline"><input type="radio"  data-ng-model="field.required" data-ng-value="false"> Optional</label>
 		</div>
 	</div>
 	<div class="form-group">
