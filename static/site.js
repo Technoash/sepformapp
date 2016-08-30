@@ -58,10 +58,12 @@ myApp.controller('FormEditController', ['$scope', '$http', '$location', '$route'
 
 myApp.controller('HomeController', ['$scope', '$http', function($scope, $http) {
 	$scope.formsList = {};
+	$scope.submissionList = {};
 
 	$scope.loadFormList = function(){
 		$http.get('/homepage').then(function(res){
-			$scope.formsList = res.data;
+			$scope.formsList = res.data.forms;
+			$scope.submissionList = res.data.submissions;
 		});
 	}
 
@@ -73,7 +75,7 @@ myApp.controller('FormManageController', ['$scope', '$http', function($scope, $h
 	$scope.formsList = {};
 
 	$scope.loadFormList = function(){
-		$http.get('/homepage').then(function(res){
+		$http.get('/form/manage').then(function(res){
 			$scope.formsList = res.data;
 		});
 	}

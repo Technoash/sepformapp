@@ -1,7 +1,15 @@
-<div class="row"><button go-click="form/new" class="btn btn-primary">New Form</button></div>
+<div class="row">
+	<div class="col-sm-2">
+		<button style="width: 100%;"" go-click="form/new" class="btn btn-primary">New Form</button>
+	</div>
+	<div class="col-sm-2">
+		<button style="width: 100%;" class="btn btn-primary">Random Button</button>
+	</div>
+</div>
+
 <div class="noteBox red row" ng-repeat="(formID, form) in formsList" go-click="form/fill/{{ formID }}">
 	<div class="col-sm-8">
-		<span class="onp-sl-long">{{ form.name }}</span>
+		<span class="onp-sl-long">{{ form.name }} ({{form.submissionCount}})</span>
 	</div>
 	<div class="col-sm-2">
 		<button go-click="form/edit/{{ formID }}" style="width:100%;" type="button" class="btn btn-primary">Edit</button>

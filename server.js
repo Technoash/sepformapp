@@ -12,11 +12,12 @@ var inspector = require('schema-inspector');
 
 var database = "db.json";
 
-var webServer = express();
+var webServer = express(); // It's starting the http server
 
 
-function Queue(){
-	this.queue = [];
+function Queue()
+{
+	this.queue = []; // Ensures that commands run in a chronological order
 	this.noTrigger = true;
 }
 Queue.prototype.add = function(prom){
@@ -58,7 +59,7 @@ dbQueue.add(function(){
 
 
 //generate some random ids to console
-for(var i=0; i<0; i++){
+for(var i=0; i<5; i++){
 	console.log(shortid.generate());
 }
 
@@ -98,9 +99,14 @@ function reloadDatabase(callback){
 }
 
 webServer.get('/homepage', function(req, res) {
-	var build = {};
+	var build = {forms: {}, submissions: {}};
 	for(var formKey in forms){
-		build[formKey] = {name: forms[formKey].name};
+		build.forms[formKey] = {};
+		build.forms[formKey].name = forms[formKey].name;
+	}
+	for(var submissionKey in submissions){
+		build.submissions[submissionKey] = {};
+		build.submissions[submissionKey].name = submissions[submissionKey].name;
 	}
 	res.send(build);
 });
@@ -108,7 +114,16 @@ webServer.get('/homepage', function(req, res) {
 webServer.get('/form/manage', function(req, res) {
 	var build = {};
 	for(var formKey in forms){
-		build[formKey] = {name: forms[formKey].name};
+		build[formKey] = {};
+		build[formKey].name = forms[formKey].name;
+		build[formKey].submissionCount = 0;
+
+		for(var submissionID in submissions){
+			if (submissions[submissionID].formID == formKey)
+			{
+				build[formKey].submissionCount++;
+			}
+		}
 	}
 	res.send(build);
 });
