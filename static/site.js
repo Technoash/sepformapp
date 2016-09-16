@@ -23,7 +23,11 @@ myApp.config(function($routeProvider) {
 	.when('/form/manage', {
 		templateUrl : 'pages/formManage.html',
 		controller  : 'FormManageController'
-	});
+	})
+	.when('/accountsettings', {
+		templateUrl : 'pages/accountsettings.html',
+		controller : 'AccountSettingsController'
+	})
 });
 
 myApp.controller('FormEditController', ['$scope', '$http', '$location', '$route', function($scope, $http, $location, $route) {

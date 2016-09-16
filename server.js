@@ -111,6 +111,19 @@ webServer.get('/homepage', function(req, res) {
 	res.send(build);
 });
 
+webServer.get('/accountsettings', function(req, res) {
+	var build = {forms: {}, submissions: {}};
+	for(var formKey in forms){
+		build.forms[formKey] = {};
+		build.forms[formKey].name = forms[formKey].name;
+	}
+	for(var submissionKey in submissions){
+		build.submissions[submissionKey] = {};
+		build.submissions[submissionKey].name = submissions[submissionKey].name;
+	}
+	res.send(build);
+});
+
 webServer.get('/form/manage', function(req, res) {
 	var build = {};
 	for(var formKey in forms){
