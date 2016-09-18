@@ -32,6 +32,10 @@ myApp.config(function($routeProvider) {
 		templateUrl : 'pages/login.html',
 		controller : 'LoginController'
 	})
+	.when('/createaccount', {
+		templateUrl : 'pages/createAccount.html',
+		controller : 'CreateAccountController'
+	})
 });
 
 myApp.controller('FormEditController', ['$scope', '$http', '$location', '$route', function($scope, $http, $location, $route) {
