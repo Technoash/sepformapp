@@ -36,6 +36,10 @@ myApp.config(function($routeProvider) {
 		templateUrl : 'pages/createAccount.html',
 		controller : 'CreateAccountController'
 	})
+	.when('/form/saved', {
+		templateUrl : 'pages/savedSubmissions.html',
+		controller : 'SavedSubmissionsController'
+	})
 });
 
 myApp.controller('FormEditController', ['$scope', '$http', '$location', '$route', function($scope, $http, $location, $route) {
