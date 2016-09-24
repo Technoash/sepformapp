@@ -40,6 +40,10 @@ myApp.config(function($routeProvider) {
 		templateUrl : 'pages/savedSubmissions.html',
 		controller : 'SavedSubmissionsController'
 	})
+	.when('/m', {
+		templateUrl : 'pages/HomeManager.html',
+		controller : 'HomeManagerController'
+	})
 });
 
 myApp.controller('FormEditController', ['$scope', '$http', '$location', '$route', function($scope, $http, $location, $route) {
