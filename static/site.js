@@ -44,6 +44,10 @@ myApp.config(function($routeProvider) {
 		templateUrl : 'pages/HomeManager.html',
 		controller : 'HomeManagerController'
 	})
+	.when('/submissions/accepted', {
+		templateUrl : 'pages/formSubmissionAccepted.html',
+		controller : 'formSubmissionAcceptedController'
+	})
 });
 
 myApp.controller('FormEditController', ['$scope', '$http', '$location', '$route', function($scope, $http, $location, $route) {
