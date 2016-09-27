@@ -48,6 +48,14 @@ myApp.config(function($routeProvider) {
 		templateUrl : 'pages/formSubmissionAccepted.html',
 		controller : 'formSubmissionAcceptedController'
 	})
+	.when('/submissions/resubmit', {
+		templateUrl : 'pages/formSubmissionUnaccepted.html',
+		controller : 'formSubmissionUnacceptedController'
+	})
+	.when('/form/review', {
+		templateUrl : 'pages/formReviewSubmission.html',
+		controller : 'formReviewSubmissionController'
+	})
 });
 
 myApp.controller('FormEditController', ['$scope', '$http', '$location', '$route', function($scope, $http, $location, $route) {
