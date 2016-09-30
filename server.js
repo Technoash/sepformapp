@@ -1,102 +1,45 @@
-console.log("Formie Server v1");
+console.log("Formie Server v2");
 console.log("WARNING: Concurrency and request validation not fully implemented");
+
+var port = 8000;
+var dbip = '';
 
 var Promise = require("bluebird");
 var express = require('express');
 var fs = require("fs");
 var bodyParser = require('body-parser');
 var morgan = require('morgan');
-var shortid = require('shortid');
 var _ = require('lodash');
+//for HTTP request validation
 var inspector = require('schema-inspector');
 
-var database = "db.json";
+var mongoose = require('mongoose');
+mongoose.Promise = require('bluebird');
+//for mongo database schemas
+Schema = mongoose.Schema;
 
-var webServer = express(); // It's starting the http server
+var db = mongoose.connect("mongodb://172.17.0.3/dev");
 
-
-function Queue()
-{
-	this.queue = []; // Ensures that commands run in a chronological order
-	this.noTrigger = true;
-}
-Queue.prototype.add = function(prom){
-	this.queue.push(prom);
-	if(this.noTrigger) this.run();
-}
-Queue.prototype.run = function(){
-	var me = this;
-	me.noTrigger = false;
-	 me.queue.shift()().then(function(){
-		if(me.queue.length == 0)
-			me.noTrigger = true;
-		else
-			me.run();
-	});
-}
-
-//database transasctions are managed by a queue
-//so under heavy load concurrent requests will not intefere with each other
-var dbQueue = new Queue();
-
-
-//test the queue
-dbQueue.add(function(){
-	return new Promise(function(res,rej){
-		setTimeout(function(){console.log("a:1");},10);
-		setTimeout(function(){console.log("a:2");},20);
-		setTimeout(function(){console.log("a:3");res();},30);
-	})
-});
-
-dbQueue.add(function(){
-	return new Promise(function(res,rej){
-		setTimeout(function(){console.log("b:1");},10);
-		setTimeout(function(){console.log("b:2");},15);
-		setTimeout(function(){console.log("b:3");res();},17);
-	})
+var FormSchema = new Schema({
+	name: String,
+	created: {type: Date, default: Date.now},
+	enabled: {type: Boolean, default: true}
 });
 
 
-//generate some random ids to console
-for(var i=0; i<5; i++){
-	console.log(shortid.generate());
-}
+mongoose.model('Form', FormSchema); 
+var Form = mongoose.model('Form');
 
-var enableWrites = true;
+var webServer = express();
 
-var forms, fields, submissions;
-
-//print request info to console
 webServer.use(morgan("-----------\\n:method  :url\\n-----------\\nRES-TIME: :response-time ms\\nREMOTE-ADDRESS: :remote-addr\\n-----------\\n\\n"));
 webServer.use(bodyParser.urlencoded({ extended: false }));
 webServer.use(bodyParser.json());
 
-//initial db load
-reloadDatabase(function(){
-		webServer.listen(3000, function () {
-		console.log('HTTP server listening on port 3000!');
-	});
+webServer.listen(port, function () {
+	console.log('HTTP server listening on port ' + port + '!');
 });
 
-function saveDatabase(callback){
-	console.log("saving " + database + " ...");
-	if(!enableWrites) return console.log("Writes disabled");
-	fs.writeFile(database, JSON.stringify({"forms": forms, "fields": fields, "submissions": submissions}, null, "\t"), "utf8", function(){
-		console.log(database + "saved");
-		if(typeof callback !== 'undefined') callback();
-	});
-}
-
-function reloadDatabase(callback){
-	console.log("loading " + database + " ...");
-	var source = require("./"+database);
-	forms = source.forms;
-	fields = source.fields;
-	submissions = source.submissions;
-	console.log(database + " loaded");
-	if(typeof callback !== 'undefined') callback();
-}
 
 webServer.get('/homepage', function(req, res) {
 	var build = {forms: {}, submissions: {}};
@@ -136,6 +79,7 @@ webServer.get('/form/get/:id', function(req, response) {
 });
 
 webServer.post('/form/new', function(req, response) {
+	console.log("body", req.body);
 	var validation = {
 		type: 'object',
 		properties: {
@@ -162,6 +106,13 @@ webServer.post('/form/new', function(req, response) {
 		if(req.body.fields[i].type != "text") return response.status(400).send("request validation failed.");
 	}
 
+
+	Form.create({ name: req.body.name })
+	.then(function(){
+		console.log("form name inserted");
+	})
+
+/*
 	dbQueue.add(function(){
 		return new Promise(function(resolve, rej){
 			console.log(req.body);
@@ -179,10 +130,11 @@ webServer.post('/form/new', function(req, response) {
 			response.send('success');
 			return;
 		})
-	});
+	});*/
 });
 
 webServer.post('/form/submit', function(req, response) {
+
 	var validation = {
 		type: 'object',
 		properties: {
@@ -236,24 +188,3 @@ webServer.post('/form/submit', function(req, response) {
 });
 
 webServer.use(express.static('static'));
-
-
-//BENCHMARK REQUEST RATE
-var queueCount = 10000;
-var start = new Date();
-for(var i = 0; i < queueCount; i++){
-	dbQueue.add(function(){
-		return new Promise(function(resolve, rej){
-			var demo = {"formID": "H1bpq3jFq", "fields": [{"fieldID": "BJ21xK9q", "value": "cash"},{"fieldID": "ryghJxtqc", "value": "cash"},{"fieldID": "rkbhyxtq5", "value": "cash"}]};
-			if(_.difference(forms[demo.formID].fields, _.map(demo.fields, 'fieldID')).length > 0){
-				return resolve();
-			}
-			var a = JSON.stringify({"forms": forms, "fields": fields, "submissions": submissions}, null, "\t");
-			if(dbQueue.queue.length == 0){
-				console.log("RATE: (per ms)", queueCount / (new Date()-start));
-			}
-			return resolve();
-		})
-	});
-}
-//END BENCHMARK
