@@ -18,17 +18,27 @@ mongoose.Promise = require('bluebird');
 //for mongo database schemas
 Schema = mongoose.Schema;
 
-var db = mongoose.connect("mongodb://172.17.0.3/dev");
+var db = mongoose.connect("mongodb://172.17.0.2/dev");
 
+
+var FieldSchema = new Schema({
+	type: {type: String, enum: ['number', 'text']},
+	name: String,
+	helper: String,
+	required: Boolean
+});
 var FormSchema = new Schema({
 	name: String,
 	created: {type: Date, default: Date.now},
-	enabled: {type: Boolean, default: true}
+	enabled: {type: Boolean, default: true},
+	fields: [Schema.Types.ObjectId]
 });
 
 
 mongoose.model('Form', FormSchema); 
+mongoose.model('Field', FieldSchema); 
 var Form = mongoose.model('Form');
+var Field = mongoose.model('Field');
 
 var webServer = express();
 
@@ -40,46 +50,58 @@ webServer.listen(port, function () {
 	console.log('HTTP server listening on port ' + port + '!');
 });
 
+webServer.get('/test', function(req, res) {
+	Field.findById("57f26beb9071fd00dd16475c")
+	.then(field => {
+		res.send(field);
+		console.log(field);
+	})
+	.catch(e => {
+		console.log('mongo error ', e);
+	})
+});
 
 webServer.get('/homepage', function(req, res) {
 	var build = {forms: {}, submissions: {}};
-	for(var formKey in forms){
-		build.forms[formKey] = {};
-		build.forms[formKey].name = forms[formKey].name;
-	}
-	for(var submissionKey in submissions){
-		build.submissions[submissionKey] = {};
-		build.submissions[submissionKey].name = submissions[submissionKey].name;
-	}
-	res.send(build);
+	var exec = [];
+	exec.push(
+		Form.find({}, "_id name").where('enabled').equals(true)
+		.then(a => {
+			build.forms = a;
+		})
+	)
+	Promise.all(exec)
+	.then(() => {
+		res.send(build);
+	});
 });
 
 webServer.get('/form/manage', function(req, res) {
-	var build = {};
-	for(var formKey in forms){
-		build[formKey] = {};
-		build[formKey].name = forms[formKey].name;
-		build[formKey].submissionCount = 0;
-
-		for(var submissionID in submissions){
-			if (submissions[submissionID].formID == formKey)
-			{
-				build[formKey].submissionCount++;
-			}
-		}
-	}
-	res.send(build);
+	Form.find({}, "_id enabled created name")
+	.then(a => {
+		res.send(a);
+	})
 });
 
 webServer.get('/form/get/:id', function(req, response) {
 	var result = {};
+	var exec = [];
+	exec.push(
+		Form.find({}, "_id name type helper required").where('enabled').equals(true)
+		.then(a => {
+			build.forms = a;
+		})
+	)
+	Promise.all(exec)
+	.then(() => {
+		res.send(build);
+	});
 	result.form = _.pick(forms[req.params.id], ['name']);
 	result.fields = _.pick(fields, forms[req.params.id].fields);
 	response.send(result);
 });
 
 webServer.post('/form/new', function(req, response) {
-	console.log("body", req.body);
 	var validation = {
 		type: 'object',
 		properties: {
@@ -106,31 +128,20 @@ webServer.post('/form/new', function(req, response) {
 		if(req.body.fields[i].type != "text") return response.status(400).send("request validation failed.");
 	}
 
+	//maybe check if form name in use already?
 
-	Form.create({ name: req.body.name })
-	.then(function(){
-		console.log("form name inserted");
+	//insert form and fields into database
+	Field.create(req.body.fields)
+	.then(a => {
+		return Form.create({name: req.body.name, fields: _.map(a, '_id')});
 	})
-
-/*
-	dbQueue.add(function(){
-		return new Promise(function(resolve, rej){
-			console.log(req.body);
-			var formID = shortid.generate();
-			var fieldIDs = [];
-
-			for(var i = 0; i < req.body.fields.length; i++){
-				var fieldID = shortid.generate();
-				fieldIDs.push(fieldID);
-				fields[fieldID] = req.body.fields[i];
-			}
-			forms[formID] = {name: req.body.name, fields: fieldIDs, enabled: true};
-			saveDatabase();
-			resolve();
-			response.send('success');
-			return;
-		})
-	});*/
+	.then(() => {
+		response.send("ok");
+		console.log("Form inserted");
+	})
+	.catch(e => {
+		console.log('mongo error', e);
+	})
 });
 
 webServer.post('/form/submit', function(req, response) {

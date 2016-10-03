@@ -10,7 +10,7 @@
 	</div>
 	<div class="col-sm-4">
 		<h2>Forms</h2>
-		<div class="noteBox red" ng-repeat="(formID, form) in formsList" go-click="form/fill/{{ formID }}">
+		<div class="noteBox red" ng-repeat="form in formsList" go-click="form/fill/{{ form._id }}">
 			<span class="onp-sl-long">{{ form.name }}</span>
 		</div>
 	</div>

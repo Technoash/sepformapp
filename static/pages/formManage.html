@@ -7,12 +7,12 @@
 	</div>
 </div>
 
-<div class="noteBox red row" ng-repeat="(formID, form) in formsList" go-click="form/fill/{{ formID }}">
+<div class="noteBox red row" ng-repeat="form in formsList" go-click="form/fill/{{ form._id }}">
 	<div class="col-sm-8">
-		<span class="onp-sl-long">{{ form.name }} ({{form.submissionCount}})</span>
+		<span class="onp-sl-long">{{ form.name }}</span>
 	</div>
 	<div class="col-sm-2">
-		<button go-click="form/edit/{{ formID }}" style="width:100%;" type="button" class="btn btn-primary">Edit</button>
+		<button go-click="form/edit/{{ form._id }}" style="width:100%;" type="button" class="btn btn-primary">Edit</button>
 	</div>
 	<div class="col-sm-2">
 		<button disabled style="width:100%;" type="button" class="btn btn-primary">Delete</button>
