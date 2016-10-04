@@ -1,26 +1,35 @@
+<style>
+	.home-panel .panel-body {
+		padding: 0px;
+	}
+	.panel-heading>h3 {
+		margin-top: 10px;
+	}
+	.home-panel .list-group-item {
+		border-left: 5px solid #999;
+	}
+</style>
+
 <div class="row homeRow">
 	<div class="col-sm-4">
-		<div class="panel panel-default">
+		<div class="home-panel panel panel-default">
 	  		<div class="panel-heading">
-			    <button type="button" class="btn btn-primary pull-right">New</button>
-    			<h2>Notifications</h2>
-				</div>
-			<ul class="list-group">
-			    <li class="list-group-item list-group-item-success">Your submission has been reviewed - Click here to view</li>
-			    <li class="list-group-item list-group-item-info">New form created by: Carol</li>
-			    <li class="list-group-item list-group-item-warning">Your submission has been sent back for editting - Click to view comments</li>
-			    <li class="list-group-item list-group-item-info">RK has sent you a message</li>
-			    <li class="list-group-item list-group-item-info">New form created by: Paul</li>
-  			</ul>
+    			<h3>Notifications</h3>
+			</div>
+			<div class="noteBox red">
+				<span class="onp-sl-long">Incomplete</span>
+			</div>
+			<div class="noteBox blue">
+				<span class="onp-sl-long">Saved Form - Monthly Report...</span>
+			</div>
 	  	</div>
 
 	</div>
 
 	<div class="col-sm-4">
-		<div class="panel panel-default">
+		<div class="home-panel panel panel-default">
 	  		<div class="panel-heading">
-			    <button type="button" class="btn btn-primary pull-right">New</button>
-    			<h2>Forms</h2>
+    			<h3>Forms</h3>
 			</div>
 	  		<div class="panel-body">
 	    		<div class="noteBox red" ng-repeat="(formID, form) in formsList" go-click="form/fill/{{ formID }}">
@@ -32,13 +41,17 @@
 
 
 	<div class="col-sm-4">
-		<div class="panel panel-default">
+		<div class="home-panel panel panel-default">
 	  		<div class="panel-heading">
-    			<h2>Submissions</h2>
+    			<h3>Submissions</h3>
 			</div>
-	  		<ul class="list-group">
-			    <li class="list-group-item">Monthly Report: Carol 30/08/16</li>
-			    <li class="list-group-item">incident Report: Paul 24/09/16</li>
-  			</ul>
+	  		<div class="noteBox red">
+				<span class="onp-sl-long">Incomplete</span>
+			</div>
+			<div class="noteBox blue">
+				<span class="onp-sl-long">Saved Form - Monthly Report...</span>
+			</div>
 	  	</div>
 	</div>
+</div>
+
