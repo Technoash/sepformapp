@@ -1,26 +1,55 @@
+<style>
+	.home-panel .panel-body {
+		padding: 0px;
+	}
+	.panel-heading>h3 {
+		margin-top: 10px;
+	}
+	.home-panel .list-group-item {
+		border-left: 5px solid #999;
+	}
+</style>
+
 <div class="row homeRow">
 	<div class="col-sm-4">
-		<h2>Notifications</h2>
-		<div class="noteBox blue">
-			<span class="onp-sl-long">something</span>
-		</div>
-		<div class="noteBox blue">
-			<span class="onp-sl-long">something else</span>
-		</div>
+		<div class="home-panel panel panel-default">
+	  		<div class="panel-heading">
+    			<h3>Notifications</h3>
+			</div>
+			<div class="noteBox red">
+				<span class="onp-sl-long">Incomplete</span>
+			</div>
+			<div class="noteBox blue">
+				<span class="onp-sl-long">Saved Form - Monthly Report...</span>
+			</div>
+	  	</div>
 	</div>
+
 	<div class="col-sm-4">
-		<h2>Forms</h2>
-		<div class="noteBox red" ng-repeat="form in formsList" go-click="form/fill/{{ form._id }}">
-			<span class="onp-sl-long">{{ form.name }}</span>
-		</div>
+		<div class="home-panel panel panel-default">
+	  		<div class="panel-heading">
+    			<h3>Forms</h3>
+			</div>
+	  		<div class="panel-body">
+	    		<div class="noteBox red" ng-repeat="form in formsList" go-click="form/fill/{{ formID._id }}">
+					<span class="onp-sl-long">{{ form.name }}</span>
+				</div>
+			</div>
+	  	</div>
 	</div>
+
+
 	<div class="col-sm-4">
-		<h2>Submissions</h2>
-		<div class="noteBox orange">
-			<span class="onp-sl-long">hi lol</span>
-		</div>
-		<div class="noteBox orange">
-			<span class="onp-sl-long">ayy</span>
-		</div>
+		<div class="home-panel panel panel-default">
+	  		<div class="panel-heading">
+    			<h3>Submissions</h3>
+			</div>
+	  		<div class="noteBox red">
+				<span class="onp-sl-long">Incomplete</span>
+			</div>
+			<div class="noteBox blue">
+				<span class="onp-sl-long">Saved Form - Monthly Report...</span>
+			</div>
+	  	</div>
 	</div>
 </div>

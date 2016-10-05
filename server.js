@@ -30,7 +30,7 @@ webServer.use(bodyParser.json());
 
 //register HTTP routes
 require('./routes.js')(webServer, mongoose);
-//server files in 'static' directory too
+//serve files in 'static' directory too
 webServer.use(express.static('static'));
 
 //start listening for HTTP requests
