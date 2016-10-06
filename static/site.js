@@ -1,33 +1,58 @@
-var myApp = angular.module('myApp', ['ngRoute']);
+var myApp = angular.module('myApp', ['ngRoute']).run(function($rootScope){
+	$rootScope.auth = {};
+});
 
 myApp.config(function($routeProvider) {
 	$routeProvider
 	.when('/', {
 		templateUrl : 'pages/home.html',
-		controller  : 'HomeController'
+		controller  : 'HomeController',
+		data: {
+			access: 'user'
+		}
 	})
 	.when('/form/edit/:id', {
 		templateUrl : 'pages/formEdit.html',
 		controller  : 'FormEditController',
-		new: false
+		data: {
+			access: 'user',
+			new: false
+		}
 	})
 	.when('/form/new', {
 		templateUrl : 'pages/formEdit.html',
 		controller  : 'FormEditController',
-		new: true
+		data: {
+			access: 'user',
+			new: true
+		}
 	})
 	.when('/form/fill/:id', {
 		templateUrl : 'pages/formFill.html',
-		controller  : 'FormFillController'
+		controller  : 'FormFillController',
+		data: {
+			access: 'user'
+		}
 	})
 	.when('/form/manage', {
 		templateUrl : 'pages/formManage.html',
-		controller  : 'FormManageController'
+		controller  : 'FormManageController',
+		data: {
+			access: 'manager'
+		}
+	})
+	.when('/login', {
+		templateUrl : 'pages/login.html',
+		controller  : 'LoginController',
+		data: {
+
+		}
 	});
+
 });
 
-myApp.controller('FormEditController', ['$scope', '$http', '$location', '$route', function($scope, $http, $location, $route) {
-	$scope.new = $route.current.$$route.new;
+myApp.controller('FormEditController', function($scope, $http, $location, $route) {
+	$scope.new = $route.current.$$route.data.new;
 	$scope.name = "";
 	$scope.fields = [];
 
@@ -54,7 +79,7 @@ myApp.controller('FormEditController', ['$scope', '$http', '$location', '$route'
 	$scope.updateForm = function(){
 		alert('not implemented');
 	}
-}]);
+});
 
 myApp.controller('HomeController', ['$scope', '$http', function($scope, $http) {
 	$scope.formsList = {};
@@ -124,4 +149,41 @@ myApp.directive( 'goClick', function($location) {
   };
 });
 
+
+myApp.controller('LoginController', function($scope, $http, $rootScope) {
+	$scope.email= "";
+	$scope.password= "";
+	$scope.remember= true;
+
+	$scope.login = function(){
+		$http.post('/auth/login', {email: $scope.email, password: $scope.password, remember: $scope.remember})
+		.then(function(res){
+			console.log(res);
+			$location.path( $rootScope.auth.returnTo );
+		})
+	}
+});
+
+myApp.run(function ($rootScope, $location) {
+
+	$rootScope.$on('$routeChangeStart', function (event, toState, toParams) {
+		if(typeof toState === 'undefined') return;
+		if(typeof toState.data.access === 'undefined') return;
+
+		var access = toState.data.access;
+
+		if (typeof $rootScope.auth.currentUser === 'undefined' || 
+			typeof $rootScope.auth.currentUser.access === 'undefined' || 
+			access != $rootScope.auth.currentUser.access && 
+			$rootScope.auth.currentUser.access != 'manager') {
+
+			event.preventDefault();
+			$rootScope.auth.returnTo = toState.originalPath;
+			$location.path( "/login" );
+		}
+	});
+
+});
+
 myApp.controller('mainController', function($scope) {});
+

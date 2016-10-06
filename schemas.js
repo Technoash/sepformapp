@@ -1,19 +1,26 @@
 module.exports = function (mongoose) {
 	Schema = mongoose.Schema;
-	
-    var FieldSchema = new Schema({
+
+	mongoose.model('Field', new Schema({
 		type: {type: String, enum: ['number', 'text']},
 		name: String,
 		helper: String,
 		required: Boolean
-	});
-	var FormSchema = new Schema({
+	}));
+
+	mongoose.model('Form', new Schema({
 		name: String,
 		created: {type: Date, default: Date.now},
 		enabled: {type: Boolean, default: true},
 		fields: [Schema.Types.ObjectId]
-	});
-
-	mongoose.model('Form', FormSchema); 
-	mongoose.model('Field', FieldSchema); 
+	})); 
+	 
+	mongoose.model('Account', new Schema({
+		email: {type: String, required: true, unique: true},
+		created: {type: Date, default: Date.now},
+		name: String,
+		password: String,
+		cid: String,
+		creator: Schema.Types.ObjectId
+	}));
 };

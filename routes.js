@@ -5,6 +5,25 @@ var Promise = require("bluebird");
 module.exports = function (webServer, mongoose) {
 	var Form = mongoose.model('Form');
 	var Field = mongoose.model('Field');
+	var Account = mongoose.model('Account');
+
+	function validateAuthCookie(req, res, next){
+		
+	}
+
+	webServer.get('/test', function(req, res) {
+		var password = require('password-hash-and-salt-promise');
+		password('kmonney69').hash()
+		.then(hash => {
+			return Account.create({email: "ashneil.roy@gmail.com", name: "Ashneil Roy", password: hash, cid: "98126016"});
+		})
+		.then(() => {
+			res.status(200).send('account created');
+		})
+		.catch(() => {
+			res.status(500).send('error');
+		})
+	});
 
 	webServer.get('/homepage', function(req, res) {
 		var build = {forms: {}, submissions: {}};

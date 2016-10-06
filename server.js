@@ -7,6 +7,7 @@ var dbip = '172.17.0.2';
 var Promise = require("bluebird");
 var express = require('express');
 var bodyParser = require('body-parser');
+var cookieParser = require('cookie-parser')
 var morgan = require('morgan');
 var mongoose = require('mongoose');
 
@@ -24,9 +25,10 @@ var webServer = express();
 
 //set up HTTP logging
 webServer.use(morgan("-----------\\n:method  :url\\n-----------\\nRES-TIME: :response-time ms\\nREMOTE-ADDRESS: :remote-addr\\n-----------\\n\\n"));
-//set up POST request JSON parsing
+//set up POST request JSON parsing, cookie parsing
 webServer.use(bodyParser.urlencoded({ extended: false }));
 webServer.use(bodyParser.json());
+webServer.use(cookieParser());
 
 //register HTTP routes
 require('./routes.js')(webServer, mongoose);
