@@ -14,40 +14,76 @@
 
 <ng-include src="'titleBar'"></ng-include>
 <h3>Form Fields</h3>
-<h4>{{ fields.length }} fields</h4>
-<button  class="btn btn-default" ng-click="addField('text');">Add field</button>
-<div class="row formEditField form-horizontal" ng-repeat="field in fields">
-	<div class="form-group">
-		<label class="col-sm-2 control-label">Type</label>
-		<div class="col-sm-10">
-			<select name="singleSelect" class="form-control col-sm-5" ng-model="field.type">
-				<option value="text">Text</option>
-				<option value="number">Number</option>
-			</select>
+<h4>{{ forms.length }} fields</h4>
+<hr/>
+
+<div class="col-sm-4">
+	<div class="row" role="group">
+		<div class="btn-group-vertical col-sm-10">
+			<button class="btn btn-primary btn-lg" ng-click="addForm('text');">
+				<span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+				New Text
+			</button>
+			<button class="btn btn-primary btn-lg"" ng-click="addForm('date');">
+				<span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+				New Date
+			</button>
+			<button class="btn btn-primary btn-lg" ng-click="addForm('number');">
+				<span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+				New Number
+			</button>
 		</div>
 	</div>
-	<div class="form-group">
-		<label class="col-sm-2 control-label">Name</label>
-		<div class="col-sm-10">
-			<input type="text" ng-model="field.name" class="form-control" placeholder="Field Name">
+	<div class="row">
+		<div class="col-sm-10"> 
+			<hr/>
 		</div>
 	</div>
-	<div class="form-group">
-		<label class="col-sm-2 control-label">Helper</label>
-		<div class="col-sm-10">
-			<input type="text" ng-model="field.helper" class="form-control" placeholder="Field Helper">
+	<div class="row">
+		<div class="panel panel-default">
+  			<div class="panel-heading">Forms</div>
+    		<div class="list-group" ng-repeat="form in forms">
+ 				 <button class="btn list-group-item" ng-click="displayForm($index)">
+					  {{form.name}}
+					  <span class="badge" ng-click="deleteForm($index)">Delete</span>
+				</button>
+			</div>	
 		</div>
 	</div>
-	<div class="form-group">
-		<label class="col-sm-2 control-label"></label>
-		<div class="col-sm-10">
-			<label class="radio-inline"><input type="radio"  data-ng-model="field.required" data-ng-value="true"> Required</label>
-			<label class="radio-inline"><input type="radio"  data-ng-model="field.required" data-ng-value="false"> Optional</label>
-		</div>
-	</div>
-	<div class="form-group">
-		<div class="col-sm-offset-2 col-sm-10">
-			<button ng-click="deleteField($index);" class="btn">Delete</button>
+</div>
+
+<div class="col-sm-8">
+	<div class="row formEditField form-horizontal" ng-if="formSelected != null">
+		<div>
+			<div class="form-group">
+				<label class="col-sm-2 control-label">Type</label>
+				<div class="col-sm-10">
+					<select name="singleSelect" class="form-control col-sm-5" ng-model="formSelected.type">
+						<option value="text">Text</option>
+						<option value="date">Date</option>
+						<option value="number">Number</option>
+					</select>
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-2 control-label">Name</label>
+				<div class="col-sm-10">
+					<input type="text" ng-model="formSelected.name" class="form-control" placeholder="Field Name">
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-2 control-label">Helper</label>
+				<div class="col-sm-10">
+					<input type="text" ng-model="formSelected.helper" class="form-control" placeholder="Field Helper">
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-2 control-label"></label>
+				<div class="col-sm-10">
+					<label class="radio-inline"><input type="radio"  data-ng-model="formSelected.required" data-ng-value="true"> Required</label>
+					<label class="radio-inline"><input type="radio"  data-ng-model="formSelected.required" data-ng-value="false"> Optional</label>
+				</div>
+			</div>
 		</div>
 	</div>
 </div>

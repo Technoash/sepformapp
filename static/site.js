@@ -31,21 +31,39 @@ myApp.controller('FormEditController', ['$scope', '$http', '$location', '$route'
 	$scope.name = "";
 	$scope.fields = [];
 
-	$scope.addField = function(type){
-		$scope.fields[$scope.fields.length] = {
+	$scope.forms = [];
+
+	$scope.index_count = 0
+
+	$scope.formSelected = null;
+
+	$scope.addForm = function(type) {
+		$scope.formSelected = $scope.forms[$scope.forms.length] = {
 			type: type,
-			name: "",
+			name: "Form" + $scope.index_count++,
 			helper: "",
 			required: false
+		}	
+	}
+
+	$scope.displayForm = function(index) {
+		if (index < $scope.forms.length)
+		{
+			$scope.formSelected = $scope.forms[index]
 		}
 	}
 
-	$scope.deleteField = function(index){
-		$scope.fields.splice(index, 1);
+	$scope.deleteForm = function(index){
+		if ($scope.forms[index] == $scope.formSelected)
+		{
+			$scope.formSelected = null;
+		}
+
+		$scope.forms.splice(index, 1);
 	}
 
 	$scope.submitNewForm = function(){
-		$http.post('/form/new', {fields: $scope.fields, name: $scope.name})
+		$http.post('/form/new', {fields: $scope.forms, name: $scope.name})
 		.then(function(res){
 			$location.path( "/form/manage" );
 		});
