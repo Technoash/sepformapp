@@ -2,12 +2,13 @@ console.log("Formie Server v2");
 console.log("WARNING: Concurrency and request validation not fully implemented");
 
 var port = 8000;
-var dbip = '172.17.0.2';
+var dbip = '172.17.0.3';
 
 var Promise = require("bluebird");
 var express = require('express');
 var bodyParser = require('body-parser');
-var cookieParser = require('cookie-parser')
+var cookieParser = require('cookie-parser');
+var expressSession = require('express-session');
 var morgan = require('morgan');
 var mongoose = require('mongoose');
 
@@ -29,6 +30,7 @@ webServer.use(morgan("-----------\\n:method  :url\\n-----------\\nRES-TIME: :res
 webServer.use(bodyParser.urlencoded({ extended: false }));
 webServer.use(bodyParser.json());
 webServer.use(cookieParser());
+webServer.use(expressSession({secret:'kj3bwrtpiuohwe9p8hfipq324un4p9hef0h2oiuhgv6'}));
 
 //register HTTP routes
 require('./routes.js')(webServer, mongoose);

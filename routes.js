@@ -1,27 +1,128 @@
 var _ = require('lodash');
 var inspector = require('schema-inspector');
 var Promise = require("bluebird");
+var password = require('password-hash-and-salt-promise');
+
+// POST RESPONSE HTTP STATUSES
+//  200 - good
+//  400 - user error
+//  500 - unexpected server error, or unxepexted JSON format
 
 module.exports = function (webServer, mongoose) {
 	var Form = mongoose.model('Form');
 	var Field = mongoose.model('Field');
 	var Account = mongoose.model('Account');
+	var Session = mongoose.model('Session');
 
 	function validateAuthCookie(req, res, next){
 		
 	}
 
-	webServer.get('/test', function(req, res) {
-		var password = require('password-hash-and-salt-promise');
+	webServer.get('/createInitialAccount', function(req, res) {
 		password('kmonney69').hash()
 		.then(hash => {
-			return Account.create({email: "ashneil.roy@gmail.com", name: "Ashneil Roy", password: hash, cid: "98126016"});
+			return Account.create({email: "ashneil.roy@gmail.com", name: "Ashneil Roy", password: hash, cid: "98126016", access: "user"});
 		})
 		.then(() => {
-			res.status(200).send('account created');
+			res.send('account created');
 		})
-		.catch(() => {
+		.catch(e => {
 			res.status(500).send('error');
+			throw e;
+		})
+	});
+
+	webServer.get('/auth/check', function(req, res) {
+		if(typeof req.session.sessionID === 'undefined'){
+			res.status(400).send('no cookie');
+			return;
+		}
+
+		function AuthError(clientMessage) {
+			this.clientMessage = clientMessage;
+		}
+		AuthError.prototype = Object.create(Error.prototype);
+
+		var session;
+		//find session with id from cookie
+		Session.findOne().where('_id').equals(req.session.sessionID)
+		.then(result => {
+			//if session dosen't exist in db
+			if(result == null) throw new AuthError('no session');
+			session = result;
+			if(Date.now() > session.endTime){
+				//you have to do .then() to insert it into a promise chain for it to execute. idk why?
+				Session.remove({ _id: session._id }).then();
+				throw new AuthError('session expired');
+			}
+
+			//get account from session
+			return Account.findOne().where('_id').equals(session.account);
+		})
+		.then(account => {
+			//send account info and expiry
+			res.send({account: _.pick(account, ['email', 'name', 'cid', 'access']), session: {expiresIn: session.endTime - Date.now()}});
+		})
+		.catch(AuthError, e => {
+			res.status(400).send(e.clientMessage);
+		})
+		.catch(e => {
+			res.status(500).send();
+			throw e;
+		})
+	});
+
+	webServer.post('/auth/login', function(req, res) {
+		//validate post JSON
+		var validation = inspector.validate({
+			type: 'object',
+			properties: {
+				email: {type: "string"},
+				password: {type: "string"},
+				remember: {type: "boolean"}
+			}
+		}, req.body);
+
+		if(!validation.valid) return res.status(500).send("request validation failed.");
+		
+		function LoginError(clientMessage) {
+			this.clientMessage = clientMessage;
+		}
+		LoginError.prototype = Object.create(Error.prototype);
+
+		//get account
+		var account;
+		Account.find().where('email').equals(req.body.email.toLowerCase())
+		.then(result => {
+			if(result.length != 1) throw new LoginError('Account not found');
+			account = result[0];
+			//check password
+			return password(req.body.password).verifyAgainst(account.password);
+		})
+		.then(passAccepted => {
+			if(!passAccepted) throw new LoginError('Password incorrect');
+			//delete any existing sessions for this account
+			return Session.remove({ account: account._id });
+		})
+		.then(() => {
+			//create a new session
+			//var endTime = Date.now() + 2*60*60*1000
+			var endTime = Date.now() + 500*1000;
+			//   if remember me, add 6 hours
+			//if(req.body.remember) endTime += 6*60*60*1000
+			return Session.create({account: account._id, endTime: endTime, remember: req.body.remember})
+		})
+		.then(newSession => {
+			//set cookie and send account information
+			req.session.sessionID = newSession._id;
+			res.send({account: _.pick(account, ['email', 'name', 'cid', 'access']), session: {expiresIn: newSession.endTime - Date.now()}});
+		})
+		.catch(LoginError, e => {
+			res.status(400).send(e.clientMessage);
+		})
+		.catch(e => {
+			res.status(500).send("Internal error");
+			throw e;
 		})
 	});
 
@@ -67,11 +168,11 @@ module.exports = function (webServer, mongoose) {
 				}
 			}
 		};
-		if(!inspector.validate(validation, req.body)) return response.status(400).send("request validation failed.");
+		if(!inspector.validate(validation, req.body)) return response.status(500).send("request validation failed.");
 
 		//validate field types
 		for(var i=0; i < req.body.fields.length; i++){
-			if(req.body.fields[i].type != "text") return response.status(400).send("request validation failed.");
+			if(req.body.fields[i].type != "text") return response.status(500).send("request validation failed.");
 		}
 
 		//maybe check if form name in use already?

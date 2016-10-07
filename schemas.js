@@ -21,6 +21,14 @@ module.exports = function (mongoose) {
 		name: String,
 		password: String,
 		cid: String,
-		creator: Schema.Types.ObjectId
+		creator: Schema.Types.ObjectId,
+		access: {type: String, required: true}
+	}));
+
+	mongoose.model('Session', new Schema({
+		account: {type: Schema.Types.ObjectId, required: true},
+		startTime: {type: Date, default: Date.now},
+		endTime: {type: Date, required: true},
+		remember: Boolean
 	}));
 };

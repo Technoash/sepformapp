@@ -1,5 +1,5 @@
-var myApp = angular.module('myApp', ['ngRoute']).run(function($rootScope){
-	$rootScope.auth = {};
+var myApp = angular.module('myApp', ['ngRoute', 'ui.bootstrap']).run(function($rootScope){
+	$rootScope.auth = {unchecked: true};
 });
 
 myApp.config(function($routeProvider) {
@@ -41,14 +41,6 @@ myApp.config(function($routeProvider) {
 			access: 'manager'
 		}
 	})
-	.when('/login', {
-		templateUrl : 'pages/login.html',
-		controller  : 'LoginController',
-		data: {
-
-		}
-	});
-
 });
 
 myApp.controller('FormEditController', function($scope, $http, $location, $route) {
@@ -150,7 +142,7 @@ myApp.directive( 'goClick', function($location) {
 });
 
 
-myApp.controller('LoginController', function($scope, $http, $rootScope) {
+function loginModalController($scope, $http, $rootScope, $location, $uibModalInstance, $route) {
 	$scope.email= "";
 	$scope.password= "";
 	$scope.remember= true;
@@ -158,32 +150,63 @@ myApp.controller('LoginController', function($scope, $http, $rootScope) {
 	$scope.login = function(){
 		$http.post('/auth/login', {email: $scope.email, password: $scope.password, remember: $scope.remember})
 		.then(function(res){
-			console.log(res);
-			$location.path( $rootScope.auth.returnTo );
+			$rootScope.auth.account = res.data.account;
+			$rootScope.auth.session = res.data.session;
+			$route.reload();
+			$uibModalInstance.close();
 		})
 	}
-});
+}
 
-myApp.run(function ($rootScope, $location) {
+myApp.run(function ($rootScope, $location, $http, $uibModal, $route) {
 
 	$rootScope.$on('$routeChangeStart', function (event, toState, toParams) {
 		if(typeof toState === 'undefined') return;
 		if(typeof toState.data.access === 'undefined') return;
 
+
+
 		var access = toState.data.access;
-
-		if (typeof $rootScope.auth.currentUser === 'undefined' || 
-			typeof $rootScope.auth.currentUser.access === 'undefined' || 
-			access != $rootScope.auth.currentUser.access && 
-			$rootScope.auth.currentUser.access != 'manager') {
-
+		if (typeof $rootScope.auth.account === 'undefined'){
+			//not logged in
 			event.preventDefault();
-			$rootScope.auth.returnTo = toState.originalPath;
-			$location.path( "/login" );
+
+			function createLoginModal(){
+				return $uibModal.open({
+				      templateUrl: 'pages/loginModal.html',
+				      size: 'sm',
+				      controller: loginModalController
+			    });
+			}
+
+			if($rootScope.auth.unchecked){
+				//haven't checked if cookie was set previously
+				$rootScope.auth.unchecked = false;
+				console.log('auth checking');
+				$http.get('/auth/check')
+				.then(function(res){
+					$rootScope.auth.account = res.data.account;
+					$rootScope.auth.session = res.data.session;
+					$route.reload();
+				})
+				.catch(function(e){
+					createLoginModal();
+				})
+				return;
+			}
+			createLoginModal();
+			return;
+		}
+		if(access != $rootScope.auth.account.access && $rootScope.auth.account.access != 'manager'){
+			alert('not authorised');
+			console.log('not authorised');
+			event.preventDefault();
+			return;
 		}
 	});
 
 });
 
-myApp.controller('mainController', function($scope) {});
-
+myApp.controller('mainController', function($scope, $rootScope) {
+	$scope.root = $rootScope;
+});

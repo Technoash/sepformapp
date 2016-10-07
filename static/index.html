@@ -6,10 +6,12 @@
 
 <script src="jquery-3.1.0.min.js"></script>
 <script src="angular.min.js"></script>
+<script src="angular-ui-bootstrap.min.js"></script>
 <script src="angular-route.min.js"></script>
 <script src="bootstrap/bootstrap.min.js"></script>
 <script src="site.js"></script>
 
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <body ng-app="myApp" ng-controller="mainController">
 
@@ -18,7 +20,7 @@
             <nav class="navbar navbar-default">
             <div class="container">
                 <div class="navbar-header">
-                    <a class="navbar-brand" href="#/">perForm</a>
+                    <a class="navbar-brand" href="#/">perForm {{ sessionRemaining }}</a>
                 </div>
 
                 <ul class="nav navbar-nav navbar-right">
@@ -35,11 +37,14 @@
             <!-- this is where content will be injected -->
             <div class="container" ng-view></div>
 
-            <div class="device-xs visible-xs">xs</div>
-            <div class="device-sm visible-sm">sm</div>
-            <div class="device-md visible-md">md</div>
-            <div class="device-lg visible-lg">lg</div>
+            <!-- bootstrap size debug, account access debug on bottom right of screen -->
+            <div style="bottom: 0;position: fixed;">
+                {{ root.auth.account.access }}
+                <span class="device-xs visible-xs">xs</span>
+                <span class="device-sm visible-sm">sm</span>
+                <span class="device-md visible-md">md</span>
+                <span class="device-lg visible-lg">lg</span>
+            </div>
         </div>
-
 </body>
 </html>
