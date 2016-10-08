@@ -1,88 +1,119 @@
-<div class="row form-horizontal">
-	<div class="form-group">
-		<label class="col-sm-2 control-label">Form Title</label>
-		<div class="col-sm-5">
-			<input type="text" ng-model="$parent.name" class="form-control" placeholder="New Form" ng-if="new">
-			<input type="text" ng-model="$parent.name" class="form-control" placeholder="Form Title" ng-if="!new">
-		</div>
-		<div class="col-offset-sm-3 col-sm-2">
-			<button ng-if="new" class="btn" ng-click="submitNewForm();">Create</button>
-			<button ng-if="!new" class="btn" ng-click="updateForm();">Update</button>
-		</div>
+<style>
+	.activeRow {
+		background: #f0f6fb;
+	}
+
+	.coolScroll::-webkit-scrollbar-track{
+		-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+		background-color: #F5F5F5;
+	}
+
+	.coolScroll::-webkit-scrollbar{
+		width: 6px;
+		background-color: #F5F5F5;
+	}
+
+	.coolScroll::-webkit-scrollbar-thumb{
+		background-color: #000000;
+	}
+</style>
+<div class="row">
+	<div class="col-sm-12">
+		<h2 ng-if="new">New Form</h2>
+		<h2 ng-if="!new">Edit Form</h2>
+		<hr/>
+		<h3>Form Fields</h3>
+		<h4>{{ fields.length }} fields</h4>
 	</div>
 </div>
 
-<ng-include src="'titleBar'"></ng-include>
-<h3>Form Fields</h3>
-<h4>{{ forms.length }} fields</h4>
-<hr/>
-
-<div class="col-sm-4">
-	<div class="row" role="group">
-		<div class="btn-group-vertical col-sm-10">
-			<button class="btn btn-primary btn-lg" ng-click="addForm('text');">
-				<span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-				New Text
-			</button>
-			<button class="btn btn-primary btn-lg"" ng-click="addForm('date');">
-				<span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-				New Date
-			</button>
-			<button class="btn btn-primary btn-lg" ng-click="addForm('number');">
-				<span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-				New Number
-			</button>
-		</div>
-	</div>
-	<div class="row">
-		<div class="col-sm-10"> 
-			<hr/>
-		</div>
-	</div>
-	<div class="row">
+<div class="row">
+	<div class="col-sm-4">
 		<div class="panel panel-default">
-  			<div class="panel-heading">Forms</div>
-    		<div class="list-group" ng-repeat="form in forms">
- 				 <button class="btn list-group-item" ng-click="displayForm($index)">
-					  {{form.name}}
-					  <span class="badge" ng-click="deleteForm($index)">Delete</span>
+			<div style="padding: 0px;" class="panel-heading">
+				<div style="width: 100%;" class="btn-group-vertical">
+
+					<button ng-repeat="(fieldType, fieldTypeName) in fieldTypes" class="btn btn-default btn-lg" ng-click="addField(fieldType);">
+						<!--<i class="fa fa-bars"></i>-->
+						Add {{fieldTypeName}}
+					</button>
+				</div>
+			</div>
+			<div class="list-group coolScroll" style="min-height: 100px; max-height: 300px; overflow-y: scroll;">
+				<div ng-if="fields.length == 0" style="padding-left: 20px;">
+					<h3>No fields yet</h3>
+					<p>Click a button above to add a field</p>
+				</div>
+				<button ng-repeat="field in fields" ng-class="{'activeRow': field == fieldSelected}" class="btn list-group-item" ng-click="displayField($index)">
+					{{ fieldTypes[field.type] }}: <b>{{ (field.name == "") ? "Unnamed" : field.name}}</b>
+					<span class="badge" ng-click="deleteField($index)">Delete</span>
 				</button>
 			</div>	
 		</div>
+		<hr class="device-xs visible-xs" />
+	</div>
+
+	<div ng-if="fieldSelected != null" class="col-sm-8">
+		<div class="jumbotron" style="background: none; border: 1px solid gray;">
+			<div class="row">
+				<div class="col-sm-11 col-sm-offset-1">
+					<h4>Field: {{ (fieldSelected.name == "") ? "Unnamed " + fieldTypes[fieldSelected.type] :  fieldSelected.name}}</h4>
+				</div>
+			</div>
+			<div class="row form-horizontal" style="margin-top: 30px;">
+				<div class='col-sm-12'>
+					<div class="form-group">
+						<label class="col-sm-2 control-label">Name</label>
+						<div class="col-sm-10">
+							<input type="text" ng-model="fieldSelected.name" class="form-control" placeholder="Field Name">
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-sm-2 control-label">Type</label>
+						<div class="col-sm-10">
+							<!-- need to replace h5 with something else -->
+							<h5>{{ fieldTypes[fieldSelected.type] }}</h5>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-sm-2 control-label">Helper</label>
+						<div class="col-sm-10">
+							<input type="text" ng-model="fieldSelected.helper" class="form-control" placeholder="Field Helper">
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-sm-2 control-label"></label>
+						<div class="col-sm-10">
+							<label class="radio-inline"><input type="radio"  data-ng-model="fieldSelected.required" data-ng-value="true"> Required</label>
+							<label class="radio-inline"><input type="radio"  data-ng-model="fieldSelected.required" data-ng-value="false"> Optional</label>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
 	</div>
 </div>
 
-<div class="col-sm-8">
-	<div class="row formEditField form-horizontal" ng-if="formSelected != null">
-		<div>
-			<div class="form-group">
-				<label class="col-sm-2 control-label">Type</label>
-				<div class="col-sm-10">
-					<select name="singleSelect" class="form-control col-sm-5" ng-model="formSelected.type">
-						<option value="text">Text</option>
-						<option value="date">Date</option>
-						<option value="number">Number</option>
-					</select>
-				</div>
+<div class="row">
+	<div class="col-sm-12">
+		<hr/>
+		<h3>Form Properties</h3>
+	</div>
+</div>
+
+<div class="row form-horizontal">
+	<div class="col-sm-6">
+		<div class="form-group">
+			<label class="col-sm-3 control-label">Form Title</label>
+			<div class="col-sm-5">
+				<input type="text" ng-model="$parent.name" class="form-control" placeholder="Form Title">
 			</div>
-			<div class="form-group">
-				<label class="col-sm-2 control-label">Name</label>
-				<div class="col-sm-10">
-					<input type="text" ng-model="formSelected.name" class="form-control" placeholder="Field Name">
-				</div>
-			</div>
-			<div class="form-group">
-				<label class="col-sm-2 control-label">Helper</label>
-				<div class="col-sm-10">
-					<input type="text" ng-model="formSelected.helper" class="form-control" placeholder="Field Helper">
-				</div>
-			</div>
-			<div class="form-group">
-				<label class="col-sm-2 control-label"></label>
-				<div class="col-sm-10">
-					<label class="radio-inline"><input type="radio"  data-ng-model="formSelected.required" data-ng-value="true"> Required</label>
-					<label class="radio-inline"><input type="radio"  data-ng-model="formSelected.required" data-ng-value="false"> Optional</label>
-				</div>
+		</div>
+		<div class="form-group">
+			<div class="col-sm-12">
+				<button class="btn">Preview</button>
+				<button ng-if="new" class="btn btn-primary" ng-click="submitNewForm();">Create</button>
+				<button ng-if="!new" class="btn btn-primary" ng-click="updateForm();">Update</button>
 			</div>
 		</div>
 	</div>

@@ -31,39 +31,41 @@ myApp.controller('FormEditController', ['$scope', '$http', '$location', '$route'
 	$scope.name = "";
 	$scope.fields = [];
 
-	$scope.forms = [];
+	$scope.fieldTypes = {
+		text: "Text",
+		number: "Number",
+		date: "Date",
+		time: "Time"
+	}
 
 	$scope.index_count = 0
 
-	$scope.formSelected = null;
+	$scope.fieldSelected = null;
 
-	$scope.addForm = function(type) {
-		$scope.formSelected = $scope.forms[$scope.forms.length] = {
+	$scope.addField = function(type) {
+		$scope.fieldSelected = $scope.fields[$scope.fields.length] = {
 			type: type,
-			name: "Form" + $scope.index_count++,
+			name: "",
 			helper: "",
 			required: false
 		}	
 	}
 
-	$scope.displayForm = function(index) {
-		if (index < $scope.forms.length)
-		{
-			$scope.formSelected = $scope.forms[index]
+	$scope.displayField = function(index) {
+		if (index < $scope.fields.length){
+			$scope.fieldSelected = $scope.fields[index]
 		}
 	}
 
-	$scope.deleteForm = function(index){
-		if ($scope.forms[index] == $scope.formSelected)
-		{
-			$scope.formSelected = null;
+	$scope.deleteField = function(index){
+		if ($scope.fields[index] == $scope.fieldSelected){
+			$scope.fieldSelected = null;
 		}
-
-		$scope.forms.splice(index, 1);
+		$scope.fields.splice(index, 1);
 	}
 
 	$scope.submitNewForm = function(){
-		$http.post('/form/new', {fields: $scope.forms, name: $scope.name})
+		$http.post('/form/new', {fields: $scope.fields, name: $scope.name})
 		.then(function(res){
 			$location.path( "/form/manage" );
 		});
