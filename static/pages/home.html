@@ -31,7 +31,7 @@
     			<h3>Forms</h3>
 			</div>
 	  		<div class="panel-body">
-	    		<div class="noteBox red" ng-repeat="form in formsList" go-click="form/fill/{{ formID._id }}">
+	    		<div class="noteBox red" ng-repeat="(formID, form) in formsList" go-click="form/fill/{{ formID }}">
 					<span class="onp-sl-long">{{ form.name }}</span>
 				</div>
 			</div>

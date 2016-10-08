@@ -43,31 +43,44 @@ myApp.config(function($routeProvider) {
 	})
 });
 
-myApp.controller('FormEditController', function($scope, $http, $location, $route) {
+myApp.controller('FormEditController', function($scope, $request, $location, $route) {
 	$scope.new = $route.current.$$route.data.new;
-	$scope.name = "";
+	$scope.form = {};
+	$scope.form.name = "";
 	$scope.fields = [];
 
-	$scope.addField = function(type){
-		$scope.fields[$scope.fields.length] = {
+	$scope.fieldTypes = {
+		text: "Text"
+		//number: "Number",
+		//date: "Date",
+		//time: "Time"
+	}
+
+	$scope.index_count = 0
+
+	$scope.fieldSelected = null;
+
+	$scope.addField = function(type) {
+		$scope.fieldSelected = $scope.fields[$scope.fields.length] = {
 			type: type,
 			name: "",
 			helper: "",
 			required: false
-		}
+		}	
 	}
-
+	$scope.displayField = function(index) {
+		if(index < $scope.fields.length) $scope.fieldSelected = $scope.fields[index]
+	}
 	$scope.deleteField = function(index){
+		if ($scope.fields[index] == $scope.fieldSelected) $scope.fieldSelected = null;
 		$scope.fields.splice(index, 1);
 	}
-
 	$scope.submitNewForm = function(){
-		$http.post('/form/new', {fields: $scope.fields, name: $scope.name})
+		$request.post('/form/new', {fields: $scope.fields, form: $scope.form})
 		.then(function(res){
 			$location.path( "/form/manage" );
 		});
 	}
-
 	$scope.updateForm = function(){
 		alert('not implemented');
 	}
@@ -90,24 +103,26 @@ myApp.controller('HomeController', function($scope, $request) {
 });
 
 
-myApp.controller('FormManageController', ['$scope', '$http', function($scope, $http) {
+myApp.controller('FormManageController', function($scope, $request) {
 	$scope.formsList = {};
 
 	$scope.loadFormList = function(){
-		$http.get('/form/manage').then(function(res){
+		$request.get('/form/manage').then(function(res){
 			$scope.formsList = res.data;
 		});
 	}
 
 	$scope.loadFormList();
-}]);
+});
 
-myApp.controller('FormFillController', ['$scope', '$http', '$routeParams', '$location', function($scope, $http, $routeParams, $location) {
-	$scope.form = {};
-	$scope.formID = $routeParams.id;
+myApp.controller('FormFillController', function($scope, $location, $routeParams, $request) {
+	$scope.form = {_id: $routeParams.id};
+	$scope.fields = {};
+	$scope.values = {};
 
 	$scope.loadForm = function(){
-		$http.get('/form/get/'+$scope.formID).then(function(res){
+		$request.get('/form/get/'+$scope.form._id)
+		.then(function(res){
 			$scope.form = res.data.form;
 			$scope.fields = res.data.fields;
 			for(var fieldID in  $scope.fields){
@@ -121,13 +136,13 @@ myApp.controller('FormFillController', ['$scope', '$http', '$routeParams', '$loc
 		for(var fieldID in $scope.fields){
 			fields.push({fieldID: fieldID, value: $scope.fields[fieldID].value});
 		}
-		$http.post('/form/submit', {formID: $scope.formID, fields: fields})
+		$location.post('/form/submit', {formID: $scope.formID, fields: fields})
 		.then(function(res){
 			$location.path( "/" );
 		});
 	}
 	$scope.loadForm();
-}]);
+});
 
 myApp.directive( 'goClick', function($location) {
   return function ( scope, element, attrs ) {

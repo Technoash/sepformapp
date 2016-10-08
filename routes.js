@@ -15,6 +15,25 @@ module.exports = function (webServer, mongoose) {
 	var Account = mongoose.model('Account');
 	var Session = mongoose.model('Session');
 
+
+	//turns this: [{_id: "nejktg80f341uono3", name: "ashneil", city: "Sydney"}]
+	//to this: {nejktg80f341uono3: {name: "ashneil", city: "Sydney"}}
+	//makes targeting object in angular easier
+	function flatten(array, fields){
+		var out = {};
+		if(fields){
+			for(var i = 0; i < array.length; i++){
+				out[array[i]._id] = _.pick(array[i], fields);
+			}
+			return out;
+		}
+		for(var i = 0; i < array.length; i++){
+			out[array[i]._id] = _.omit(array[i].toJSON(), "_id");
+		}
+		return out;
+	}
+
+	//express middleware: checks if session cookie is valid, updates account cookie, verifies access permission
 	function validateAccess(access){
 		return function(req, res, next){
 			if(typeof req.session.sessionID === 'undefined'){
@@ -62,9 +81,15 @@ module.exports = function (webServer, mongoose) {
 	}
 
 
-	webServer.get('/test', validateAccess('user'), function(req, res) {
+
+
+	webServer.get('/test', function(req, res) {
 		console.log('GAGAGAGAGAGAGAGAGAGAAAAAAGGGGGAAAAAA');
-		res.status(200).send('ayyy');
+		Form.find({})
+		.then(a => {
+			res.status(200).send(flatten(a, ['name']));
+		})
+		
 	});
 	webServer.get('/test2', function(req, res) {
 		res.status(200).send();
@@ -73,10 +98,11 @@ module.exports = function (webServer, mongoose) {
 		res.status(400).send();
 	});
 
+
 	webServer.get('/createInitialAccount', function(req, res) {
 		password('kmonney69').hash()
 		.then(hash => {
-			return Account.create({email: "ashneil.roy@gmail.com", name: "Ashneil Roy", password: hash, cid: "98126016", access: "user"});
+			return Account.create({email: "ashneil.roy@gmail.com", name: "Ashneil Roy", password: hash, cid: "98126016", access: "manager"});
 		})
 		.then(() => {
 			res.send('account created');
@@ -151,13 +177,42 @@ module.exports = function (webServer, mongoose) {
 		exec.push(
 			Form.find({}, "_id name").where('enabled').equals(true)
 			.then(a => {
-				build.forms = a;
+				build.forms = flatten(a);
 			})
 		)
 		Promise.all(exec)
 		.then(() => {
 			res.send(build);
 		});
+	});
+
+	webServer.get('/form/get/:id', validateAccess('user'), function(req, res) {
+		var form;
+		
+		var query = Form.findOne({}, "_id name fields enabled")
+		if(req.session.account.access == 'user') query = query.where('enabled').equals(true);
+		
+		function RequestError(clientMessage) {
+			this.clientMessage = clientMessage;
+		}
+		RequestError.prototype = Object.create(Error.prototype);
+
+		query
+		.then(result => {
+			if(result == null) throw new RequestError('Form doesn\'t exist');
+			form = result;
+			return Field.find().where('_id').in(form.fields)
+		})
+		.then(result => {
+			res.send({form: _.pick(form, ['name', 'enabled']), fields: flatten(result, ['type', 'name', 'helper', 'required'])});
+		})
+		.catch(RequestError, e => {
+			res.status(400).send(e.clientMessage);
+		})
+		.catch(e =>{
+			res.status(500).send("Internal error");
+			throw e;
+		})
 	});
 
 	webServer.get('/form/manage', function(req, res) {
@@ -172,7 +227,12 @@ module.exports = function (webServer, mongoose) {
 		var validation = {
 			type: 'object',
 			properties: {
-				name: {type: "string"},
+				form: {
+					type: 'object',
+					properties: {
+						name: {type: "string"}
+					}
+				},
 				fields: {
 					type: "array",
 					items: {
@@ -199,7 +259,7 @@ module.exports = function (webServer, mongoose) {
 		//insert form and fields into database
 		Field.create(req.body.fields)
 		.then(a => {
-			return Form.create({name: req.body.name, fields: _.map(a, '_id')});
+			return Form.create({name: req.body.form.name, fields: _.map(a, '_id')});
 		})
 		.then(() => {
 			response.send("ok");

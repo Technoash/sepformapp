@@ -9,7 +9,7 @@ module.exports = function (mongoose) {
 	}));
 
 	mongoose.model('Form', new Schema({
-		name: String,
+		name: {type: String, required: true},
 		created: {type: Date, default: Date.now},
 		enabled: {type: Boolean, default: true},
 		fields: [Schema.Types.ObjectId]
