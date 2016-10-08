@@ -2,6 +2,17 @@
 	<div class="panel-heading">
 		<h3 class="text-center">Login</h3>
 	</div>
+	
+	<div ng-if="alert != null" class="alert alert-info" style="margin-bottom: 0;">
+	  <strong>{{ alert.title }}:</strong> {{ alert.message }}
+	</div>
+	<div ng-if="helper != null" class="alert alert-warning" style="margin-bottom: 0;">
+	  {{ helper }}
+	</div>
+	<div ng-if="internal != null" class="alert alert-danger" style="margin-bottom: 0;">
+	  <strong>{{ internal.code }}:</strong> {{ internal.message }}
+	</div>
+	
 	<div class="panel-body">
 		<div class="form-group">
 			<label>Email</label>

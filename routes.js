@@ -7,6 +7,7 @@ var password = require('password-hash-and-salt-promise');
 //  200 - good
 //  400 - user error
 //  500 - unexpected server error, or unxepexted JSON format
+//  401 - need to log in
 
 module.exports = function (webServer, mongoose) {
 	var Form = mongoose.model('Form');
@@ -14,9 +15,63 @@ module.exports = function (webServer, mongoose) {
 	var Account = mongoose.model('Account');
 	var Session = mongoose.model('Session');
 
-	function validateAuthCookie(req, res, next){
-		
+	function validateAccess(access){
+		return function(req, res, next){
+			if(typeof req.session.sessionID === 'undefined'){
+				res.status(401).send('No cookie');
+				return;
+			}
+
+			function AuthError(clientMessage) {
+				this.clientMessage = clientMessage;
+			}
+			AuthError.prototype = Object.create(Error.prototype);
+
+			var session;
+			//find session with id from cookie
+			Session.findOne().where('_id').equals(req.session.sessionID)
+			.then(result => {
+				//if session dosen't exist in db
+				if(result == null) throw new AuthError('No session');
+				session = result;
+				if(Date.now() > session.endTime){
+					//you have to do .then() to insert it into a promise chain for it to execute
+					Session.remove({ _id: session._id }).then();
+					throw new AuthError('Session expired');
+				}
+				//get account from session
+				return Account.findOne().where('_id').equals(session.account);
+			})
+			.then(result => {
+				if(result == null) throw new AuthError('Account dosen\'t exist');
+				var account = result;
+				if(account.access == access || account.access == 'manager'){
+					req.session.account = account;
+					return next();
+				}
+				throw new AuthError('Not privelleged enough');
+			})
+			.catch(AuthError, e => {
+				res.status(401).send(e.clientMessage);
+			})
+			.catch(e => {
+				res.status(500).send('Internal error');
+				throw e;
+			})
+		}
 	}
+
+
+	webServer.get('/test', validateAccess('user'), function(req, res) {
+		console.log('GAGAGAGAGAGAGAGAGAGAAAAAAGGGGGAAAAAA');
+		res.status(200).send('ayyy');
+	});
+	webServer.get('/test2', function(req, res) {
+		res.status(200).send();
+	});
+	webServer.get('/test3', function(req, res) {
+		res.status(400).send();
+	});
 
 	webServer.get('/createInitialAccount', function(req, res) {
 		password('kmonney69').hash()
@@ -32,44 +87,8 @@ module.exports = function (webServer, mongoose) {
 		})
 	});
 
-	webServer.get('/auth/check', function(req, res) {
-		if(typeof req.session.sessionID === 'undefined'){
-			res.status(400).send('no cookie');
-			return;
-		}
-
-		function AuthError(clientMessage) {
-			this.clientMessage = clientMessage;
-		}
-		AuthError.prototype = Object.create(Error.prototype);
-
-		var session;
-		//find session with id from cookie
-		Session.findOne().where('_id').equals(req.session.sessionID)
-		.then(result => {
-			//if session dosen't exist in db
-			if(result == null) throw new AuthError('no session');
-			session = result;
-			if(Date.now() > session.endTime){
-				//you have to do .then() to insert it into a promise chain for it to execute. idk why?
-				Session.remove({ _id: session._id }).then();
-				throw new AuthError('session expired');
-			}
-
-			//get account from session
-			return Account.findOne().where('_id').equals(session.account);
-		})
-		.then(account => {
-			//send account info and expiry
-			res.send({account: _.pick(account, ['email', 'name', 'cid', 'access']), session: {expiresIn: session.endTime - Date.now()}});
-		})
-		.catch(AuthError, e => {
-			res.status(400).send(e.clientMessage);
-		})
-		.catch(e => {
-			res.status(500).send();
-			throw e;
-		})
+	webServer.get('/auth/check', validateAccess('user'), function(req, res) {
+		res.send({account: _.pick(req.session.account, ['email', 'name', 'cid', 'access'])});
 	});
 
 	webServer.post('/auth/login', function(req, res) {
@@ -126,7 +145,7 @@ module.exports = function (webServer, mongoose) {
 		})
 	});
 
-	webServer.get('/homepage', function(req, res) {
+	webServer.get('/homepage', validateAccess('user'), function(req, res) {
 		var build = {forms: {}, submissions: {}};
 		var exec = [];
 		exec.push(

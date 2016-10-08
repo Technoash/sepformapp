@@ -73,19 +73,21 @@ myApp.controller('FormEditController', function($scope, $http, $location, $route
 	}
 });
 
-myApp.controller('HomeController', ['$scope', '$http', function($scope, $http) {
+myApp.controller('HomeController', function($scope, $request) {
 	$scope.formsList = {};
 	$scope.submissionList = {};
 
 	$scope.loadFormList = function(){
-		$http.get('/homepage').then(function(res){
+		$request.get('/homepage').then(function(res){
+			console.log(res);
 			$scope.formsList = res.data.forms;
 			$scope.submissionList = res.data.submissions;
+			$scope.$apply();
 		});
 	}
 
 	$scope.loadFormList();
-}]);
+});
 
 
 myApp.controller('FormManageController', ['$scope', '$http', function($scope, $http) {
@@ -142,59 +144,76 @@ myApp.directive( 'goClick', function($location) {
 });
 
 
-function loginModalController($scope, $http, $rootScope, $location, $uibModalInstance, $route) {
+function loginModalController($scope, $http, $rootScope, $location, $uibModalInstance, $route, alert) {
 	$scope.email= "";
 	$scope.password= "";
 	$scope.remember= true;
+	$scope.helper = null;
+	$scope.internal = null;
+
+	if(typeof alert === 'undefined') $scope.alert = null;
+	else $scope.alert = alert;
+
+	if(typeof $rootScope.auth.account !== 'undefined') $scope.email = $rootScope.auth.account.email;
 
 	$scope.login = function(){
+		$scope.helper = null;
 		$http.post('/auth/login', {email: $scope.email, password: $scope.password, remember: $scope.remember})
 		.then(function(res){
 			$rootScope.auth.account = res.data.account;
-			$rootScope.auth.session = res.data.session;
-			$route.reload();
-			$uibModalInstance.close();
+			$uibModalInstance.close('loggedin');
+		})
+		.catch(function(e){
+			if(e.status == 400) $scope.helper = e.data;
+			else $scope.internal = {code: e.status, message: e.data};
 		})
 	}
 }
 
-myApp.run(function ($rootScope, $location, $http, $uibModal, $route) {
 
+function createLoginModal($uibModal, alert){
+	return $uibModal.open({
+	      templateUrl: 'pages/loginModal.html',
+	      size: 'sm',
+	      controller: loginModalController,
+	      resolve: {
+	      	alert: function(){
+	      		return alert;
+	      	}
+	      }
+    });
+}
+
+myApp.run(function($rootScope, $location, $http, $uibModal, $route) {
 	$rootScope.$on('$routeChangeStart', function (event, toState, toParams) {
 		if(typeof toState === 'undefined') return;
 		if(typeof toState.data.access === 'undefined') return;
-
-
 
 		var access = toState.data.access;
 		if (typeof $rootScope.auth.account === 'undefined'){
 			//not logged in
 			event.preventDefault();
 
-			function createLoginModal(){
-				return $uibModal.open({
-				      templateUrl: 'pages/loginModal.html',
-				      size: 'sm',
-				      controller: loginModalController
-			    });
-			}
-
 			if($rootScope.auth.unchecked){
-				//haven't checked if cookie was set previously
 				$rootScope.auth.unchecked = false;
 				console.log('auth checking');
 				$http.get('/auth/check')
 				.then(function(res){
 					$rootScope.auth.account = res.data.account;
-					$rootScope.auth.session = res.data.session;
 					$route.reload();
 				})
 				.catch(function(e){
-					createLoginModal();
+					createLoginModal($uibModal).result
+					.then(function(){
+						$route.reload();
+					});
 				})
 				return;
 			}
-			createLoginModal();
+			createLoginModal($uibModal)
+			.then(function(){
+				$route.reload();
+			});
 			return;
 		}
 		if(access != $rootScope.auth.account.access && $rootScope.auth.account.access != 'manager'){
@@ -207,6 +226,48 @@ myApp.run(function ($rootScope, $location, $http, $uibModal, $route) {
 
 });
 
-myApp.controller('mainController', function($scope, $rootScope) {
+myApp.controller('mainController', function($scope, $rootScope, $request) {
 	$scope.root = $rootScope;
+	//console.log($request);
+	//$request.get('/test').then(function(){
+	//	console.log('hi');
+	//})
+});
+
+myApp.factory('$request', function($http, $uibModal, $rootScope) {
+	var message = {title: "Auth error", message: "Please re-login before making this request."};
+	function comb(req, resolve, reject){
+		req()
+		.then(function(data){
+			console.log('resolved', data);
+			resolve(data);
+		})
+		.catch(function(e){
+			if(e.status == 401) {
+				console.log('re-login dialog');
+				message.title = e.data;
+				createLoginModal($uibModal, message).result
+				.then(function(res){
+					comb(req, resolve, reject);
+				})
+				.catch(function(){
+					reject(e);
+				})
+				return;
+			}
+			reject(e);
+		})
+	}
+	return obj = {
+		get: function(path){
+			return new Promise(function(resolve, reject){
+				comb(()=>{return $http.get(path)}, resolve, reject);
+			})
+		},
+		post: function(path, data){
+			return new Promise(function(resolve, reject){
+				comb(()=>{$http.post(path, data)}, resolve, reject);
+			})
+		}
+	};
 });

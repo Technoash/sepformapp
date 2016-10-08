@@ -22,7 +22,7 @@ module.exports = function (mongoose) {
 		password: String,
 		cid: String,
 		creator: Schema.Types.ObjectId,
-		access: {type: String, required: true}
+		access: {type: String, required: true, enum: ['user', 'manager']}
 	}));
 
 	mongoose.model('Session', new Schema({
