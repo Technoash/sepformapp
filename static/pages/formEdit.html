@@ -32,7 +32,7 @@
 			<div style="padding: 0px;" class="panel-heading">
 				<div style="width: 100%;" class="btn-group-vertical">
 
-					<button ng-repeat="(fieldType, fieldTypeName) in fieldTypes" class="btn btn-default" ng-click="addField(fieldType);" style="background: #2b2b2b; color: white;">
+					<button ng-repeat="(fieldType, fieldTypeName) in fieldTypes" class="btn btn-default btn-lg" ng-click="addField(fieldType);" style="background: #383838; color: white;">
 						<!--<i class="fa fa-bars"></i>-->
 						Add {{fieldTypeName}}
 					</button>
@@ -53,7 +53,7 @@
 	</div>
 
 	<div ng-if="fieldSelected != null" class="col-sm-8">
-		<div class="jumbotron" style="background: none; border: 1px solid gray;">
+		<div class="jumbotron" style="background: none; border: 2px solid #383838;">
 			<div class="row">
 				<div class="col-sm-11 col-sm-offset-1">
 					<h4>Field: {{ (fieldSelected.name == "") ? "Unnamed " + fieldTypes[fieldSelected.type] :  fieldSelected.name}}</h4>
