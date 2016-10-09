@@ -31,4 +31,14 @@ module.exports = function (mongoose) {
 		endTime: {type: Date, required: true},
 		remember: Boolean
 	}));
+
+	mongoose.model('Submission', new Schema({
+		account: {type: Schema.Types.ObjectId, required: true},
+		form: {type: Schema.Types.ObjectId, required: true},
+		values: [new Schema({
+			value: {type: String, required: true},
+			fieldID: {type: Schema.Types.ObjectId, required: true}
+		})],
+		created: {type: Date, default: Date.now}
+	}));
 };

@@ -33,6 +33,14 @@ module.exports = function (webServer, mongoose) {
 		return out;
 	}
 
+	function filter(array, fields){
+		var out = [];
+		for(var i = 0; i < array.length; i++){
+			out.push(_.pick(array[i], fields));
+		}
+		return out
+	}
+
 	//express middleware: checks if session cookie is valid, updates account cookie, verifies access permission
 	function validateAccess(access){
 		return function(req, res, next){
@@ -189,7 +197,7 @@ module.exports = function (webServer, mongoose) {
 	webServer.get('/form/get/:id', validateAccess('user'), function(req, res) {
 		var form;
 		
-		var query = Form.findOne({}, "_id name fields enabled")
+		var query = Form.findOne({}, "_id name fields enabled").where('_id').equals(req.params.id)
 		if(req.session.account.access == 'user') query = query.where('enabled').equals(true);
 		
 		function RequestError(clientMessage) {
@@ -204,8 +212,42 @@ module.exports = function (webServer, mongoose) {
 			return Field.find().where('_id').in(form.fields)
 		})
 		.then(result => {
-			res.send({form: _.pick(form, ['name', 'enabled']), fields: flatten(result, ['type', 'name', 'helper', 'required'])});
+			res.send({form: _.pick(form, ['_id', 'name']), fields: filter(result, ['_id', 'type', 'name', 'helper', 'required'])});
 		})
+		.catch(RequestError, e => {
+			res.status(400).send(e.clientMessage);
+		})
+		.catch(e =>{
+			res.status(500).send("Internal error");
+			throw e;
+		})
+	});
+
+	webServer.post('/form/submission/new', validateAccess('user'), function(req, res) {
+		var validation = inspector.validate({
+			type: 'object',
+			properties: {
+				formID: {
+					type: 'string'
+				},
+				values: {
+					type: "array",
+					items: {
+						type: "object",
+						properties: {
+							value: {type: "string"},
+							fieldID: {type: "string"}
+						}
+					}
+				}
+			}
+		}, req.body);
+
+		if(!validation.valid) return res.status(500).send("request validation failed.");
+		return res.send('good');
+		var form;
+		
+		form
 		.catch(RequestError, e => {
 			res.status(400).send(e.clientMessage);
 		})
