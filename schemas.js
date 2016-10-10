@@ -39,6 +39,22 @@ module.exports = function (mongoose) {
 			value: {type: String, required: true},
 			fieldID: {type: Schema.Types.ObjectId, required: true}
 		})],
-		created: {type: Date, default: Date.now}
+		created: {type: Date, default: Date.now},
+		status: {type: String, required: true, enum: ['submitted', 'saved', 'accepted', 'declined', 'returned']}
+	}));
+
+	mongoose.model('Comment', new Schema({
+		submission: {type: Schema.Types.ObjectId, required: true},
+		created: {type: Date, default: Date.now},
+		author: {type: Schema.Types.ObjectId, required: true},
+		content: {type: String, required: true},
+		public: {type: Boolean, required: true}
+	}));
+
+	mongoose.model('Notification', new Schema({
+		submission: {type: Schema.Types.ObjectId, required: true},
+		created: {type: Date, default: Date.now},
+		for: {type: Schema.Types.ObjectId, required: true},
+		content: {type: String, required: true}
 	}));
 };
