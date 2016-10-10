@@ -44,6 +44,9 @@ myApp.config(function($routeProvider) {
 			access: 'user'
 		}
 	})
+	.otherwise({
+		templateUrl : 'pages/notFound.html'
+	})
 });
 
 myApp.controller('FormEditController', function($scope, $request, $location, $route, $alert) {
@@ -191,7 +194,6 @@ myApp.run(function($rootScope, $location, $http, $uibModal, $route, $alert, $ses
 					$rootScope.auth.account = res.data.account;
 					$alert.info("Logged in as <i>" + $rootScope.auth.account.email + "</i>");
 					$route.reload();
-					//$location.path(toState.originalPath);
 				})
 				.catch(function(e){
 					//no valid session
@@ -200,7 +202,6 @@ myApp.run(function($rootScope, $location, $http, $uibModal, $route, $alert, $ses
 					.then(function(){
 						console.log('yolo once', toState.originalPath);
 						$route.reload();
-						//$location.path(toState.originalPath);
 					});
 				})
 				return;
@@ -211,7 +212,6 @@ myApp.run(function($rootScope, $location, $http, $uibModal, $route, $alert, $ses
 			$session.loginModal().result
 			.then(function(){
 				$route.reload();
-				//$location.path(toState.originalPath);
 			});
 			return;
 		}
