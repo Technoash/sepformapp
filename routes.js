@@ -3,11 +3,16 @@ var inspector = require('schema-inspector');
 var Promise = require("bluebird");
 var password = require('password-hash-and-salt-promise');
 
-// POST RESPONSE HTTP STATUSES
+// RESPONSE HTTP STATUSES
 //  200 - good
-//  400 - user error
+//  400 - user error, business logic error
 //  500 - unexpected server error, or unxepexted JSON format
 //  401 - need to log in
+
+// RESPONSE CONTENT
+//   if data was requested, respnond with the data object
+//   if an action was requested, respond with a string describing the result "Account was created"
+//   in the case of an error, describe the error "Internal error", "Account doesn't exist"
 
 module.exports = function (webServer, mongoose) {
 	var Form = mongoose.model('Form');
@@ -92,7 +97,6 @@ module.exports = function (webServer, mongoose) {
 
 
 	webServer.get('/test', function(req, res) {
-		console.log('GAGAGAGAGAGAGAGAGAGAAAAAAGGGGGAAAAAA');
 		Form.find({})
 		.then(a => {
 			res.status(200).send(flatten(a, ['name']));
@@ -110,7 +114,20 @@ module.exports = function (webServer, mongoose) {
 	webServer.get('/createInitialAccount', function(req, res) {
 		password('kmonney69').hash()
 		.then(hash => {
-			return Account.create({email: "ashneil.roy@gmail.com", name: "Ashneil Roy", password: hash, cid: "98126016", access: "manager"});
+			return Account.create({email: "manager@gmail.com", name: "Manager Roy", password: hash, cid: "98126016", access: "manager"});
+		})
+		.then(() => {
+			res.send('account created');
+		})
+		.catch(e => {
+			res.status(500).send('error');
+			throw e;
+		})
+	});
+	webServer.get('/createInitialAccountUser', function(req, res) {
+		password('kmonney69').hash()
+		.then(hash => {
+			return Account.create({email: "user@gmail.com", name: "User Roy", password: hash, cid: "98126016", access: "user"});
 		})
 		.then(() => {
 			res.send('account created');
@@ -123,6 +140,17 @@ module.exports = function (webServer, mongoose) {
 
 	webServer.get('/auth/check', validateAccess('user'), function(req, res) {
 		res.send({account: _.pick(req.session.account, ['email', 'name', 'cid', 'access'])});
+	});
+
+	webServer.post('/auth/logout', function(req, res) {
+		Session.remove({ _id: req.session.sessionID })
+		.then(() => {
+			req.session.destroy();
+			res.send("Logged out");
+		})
+		.catch(e => {
+			res.status(500).send("Internal error. Logout may have failed");
+		});
 	});
 
 	webServer.post('/auth/login', function(req, res) {

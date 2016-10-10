@@ -5,10 +5,20 @@ var myApp = angular.module('myApp', ['ngRoute', 'ui.bootstrap']).run(function($r
 myApp.config(function($routeProvider) {
 	$routeProvider
 	.when('/', {
+		templateUrl : 'pages/landing.html'
+	})
+	.when('/user', {
 		templateUrl : 'pages/home.html',
 		controller  : 'HomeController',
 		data: {
 			access: 'user'
+		}
+	})
+	.when('/manager', {
+		templateUrl : 'pages/formManage.html',
+		controller  : 'FormManageController',
+		data: {
+			access: 'manager'
 		}
 	})
 	.when('/form/edit/:id', {
@@ -32,13 +42,6 @@ myApp.config(function($routeProvider) {
 		controller  : 'FormFillController',
 		data: {
 			access: 'user'
-		}
-	})
-	.when('/form/manage', {
-		templateUrl : 'pages/formManage.html',
-		controller  : 'FormManageController',
-		data: {
-			access: 'manager'
 		}
 	})
 });
@@ -166,8 +169,91 @@ myApp.directive( 'goClick', function($location) {
   };
 });
 
+myApp.run(function($rootScope, $location, $http, $uibModal, $route, $alert, $session) {
+	$rootScope.$on('$routeChangeStart', function (event, toState, toParams) {
+		//continue if page doesn't have access property
+		if(typeof toState === 'undefined') return;
+		if(typeof toState.data === 'undefined') return;
+		if(typeof toState.data.access === 'undefined') return;
 
-function loginModalController($scope, $http, $rootScope, $location, $uibModalInstance, $route, alert, $alert) {
+		var access = toState.data.access;
+		if (!$session.loggedIn()){
+			console.log('preventing', toState.originalPath);
+			event.preventDefault();
+
+			if($rootScope.auth.unchecked){
+				$rootScope.auth.unchecked = false;
+				//site just loaded. need to check if a valid cookie exists
+				
+				$http.get('/auth/check')
+				.then(function(res){
+					//server says I have a valid cookie and session. account details in res
+					$rootScope.auth.account = res.data.account;
+					$alert.info("Logged in as <i>" + $rootScope.auth.account.email + "</i>");
+					$route.reload();
+					//$location.path(toState.originalPath);
+				})
+				.catch(function(e){
+					//no valid session
+					$alert.info("Please log in");
+					$session.loginModal().result
+					.then(function(){
+						console.log('yolo once', toState.originalPath);
+						$route.reload();
+						//$location.path(toState.originalPath);
+					});
+				})
+				return;
+			}
+
+			//checked if we have a pre-existing cookie already
+			$alert.info("You must be logged in to use perForm. Please log in");
+			$session.loginModal().result
+			.then(function(){
+				$route.reload();
+				//$location.path(toState.originalPath);
+			});
+			return;
+		}
+		if($session.loggedIn() && access != $rootScope.auth.account.access && $rootScope.auth.account.access != 'manager'){
+			$alert.error("You are not authorised to access this page");
+			event.preventDefault();
+			return;
+		}
+	});
+
+});
+
+myApp.controller('mainController', function($scope, $rootScope, $http, $alert, $location, $session, $route) {
+	$scope.root = $rootScope;
+	$scope.$session = $session;
+
+	$scope.logOut = function(){
+		$http.post('/auth/logout')
+		.then(function(){
+			var email = null;
+			if($session.loggedIn()) email = $rootScope.auth.account.email;
+			$session.logOut();
+			$location.path('/');
+			if(email) $alert.success('<i>' + email + '</i> has been logged out');
+			else $alert.success('You have been logged out');
+		})
+		.catch(function(e){
+			console.log(e);
+			$alert.error('Unable to completely log out');
+		});
+	}
+
+	$scope.logIn = function(){
+		$session.loginModal().result
+		.then(function(){
+			if($location.path() == "/") $location.path('/'+$rootScope.auth.account.access);
+			else $route.reload();
+		});
+	}
+});
+
+function loginModalController($scope, $http, $rootScope, $uibModalInstance, alert, $alert, $session) {
 	$scope.email= "";
 	$scope.password= "";
 	$scope.remember= true;
@@ -177,7 +263,7 @@ function loginModalController($scope, $http, $rootScope, $location, $uibModalIns
 	if(typeof alert === 'undefined') $scope.alert = null;
 	else $scope.alert = alert;
 
-	if(typeof $rootScope.auth.account !== 'undefined') $scope.email = $rootScope.auth.account.email;
+	if($session.loggedIn()) $scope.email = $rootScope.auth.account.email;
 
 	$scope.login = function(){
 		$scope.helper = null;
@@ -198,74 +284,51 @@ function loginModalController($scope, $http, $rootScope, $location, $uibModalIns
 			}
 		})
 	}
+
+	$scope.devLoginUser = function(){
+		$scope.email = "user@gmail.com";
+		$scope.password = "kmonney69";
+	}
+	$scope.devLoginManager = function(){
+		$scope.email = "manager@gmail.com";
+		$scope.password = "kmonney69";
+	}
 }
 
-
-function createLoginModal($uibModal, alert){
-	return $uibModal.open({
-	      templateUrl: 'pages/loginModal.html',
-	      size: 'sm',
-	      controller: loginModalController,
-	      resolve: {
-	      	alert: function(){
-	      		return alert;
-	      	}
-	      }
-    });
-}
-
-myApp.run(function($rootScope, $location, $http, $uibModal, $route, $alert) {
-	$rootScope.$on('$routeChangeStart', function (event, toState, toParams) {
-		if(typeof toState === 'undefined') return;
-		if(typeof toState.data.access === 'undefined') return;
-
-		var access = toState.data.access;
-		if (typeof $rootScope.auth.account === 'undefined'){
-			//not logged in
-			event.preventDefault();
-
-			if($rootScope.auth.unchecked){
-
-				$rootScope.auth.unchecked = false;
-				console.log('auth checking');
-				$http.get('/auth/check')
-				.then(function(res){
-					$rootScope.auth.account = res.data.account;
-					$alert.info("Logged in as <i>" + $rootScope.auth.account.email + "</i>");
-					$route.reload();
-				})
-				.catch(function(e){
-					$alert.info("Please log in");
-					createLoginModal($uibModal).result
-					.then(function(){
-						$route.reload();
-					});
-				})
-				return;
-			}
-
-			$alert.info("You must be logged in to use perForm. Please log in");
-			createLoginModal($uibModal)
-			.then(function(){
-				$route.reload();
-			});
-			return;
+myApp.factory('$session', function($rootScope, $uibModal) {
+	return {
+		getAccount: function(){
+			if(typeof $rootScope.auth.account !== 'undefined')
+				return $rootScope.auth.account;
+			return null;
+		},
+		loggedIn: function(){
+			return typeof $rootScope.auth.account !== 'undefined' && $rootScope.auth.account;
+		},
+		logOut: function(){
+			$rootScope.auth.account = null;
+			$rootScope.auth.unchecked = false;
+		},
+		haveAccess: function(access){
+			if(typeof $rootScope.auth.account === 'undefined' || !$rootScope.auth.account) return false;
+			return access == $rootScope.auth.account.access || $rootScope.auth.account.access == 'manager';
+		},
+		loginModal: function(alert){
+			return $uibModal.open({
+			      templateUrl: 'pages/loginModal.html',
+			      size: 'sm',
+			      controller: loginModalController,
+			      resolve: {
+			      	alert: function(){
+			      		return alert;
+			      	}
+			      }
+		    });
 		}
-		if(access != $rootScope.auth.account.access && $rootScope.auth.account.access != 'manager'){
-			$alert.error("You are not authorised to access this page");
-			event.preventDefault();
-			return;
-		}
-	});
-
+	};
 });
 
-myApp.controller('mainController', function($scope, $rootScope, $request, $alert) {
-	$scope.root = $rootScope;
-});
-
-
-myApp.factory('$alert', function($rootScope) {
+myApp.factory('$alert', function() {
 	return {
 		success: function(message){
 			toastr["success"](message);
@@ -283,7 +346,7 @@ myApp.factory('$alert', function($rootScope) {
 });
 
 //good luck figuring this one out
-myApp.factory('$request', function($http, $uibModal, $rootScope, $alert) {
+myApp.factory('$request', function($http, $uibModal, $alert, $session) {
 	var message = {title: "Auth error", message: "Please re-login before making this request."};
 	function comb(req, resolve, reject){
 		req()
@@ -296,7 +359,7 @@ myApp.factory('$request', function($http, $uibModal, $rootScope, $alert) {
 				console.log('re-login dialog');
 				message.title = e.data;
 				$alert.info("Your session has expired. Please log in again");
-				createLoginModal($uibModal, message).result
+				$session.loginModal(message).result
 				.then(function(res){
 					comb(req, resolve, reject);
 				})
