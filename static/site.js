@@ -56,6 +56,10 @@ myApp.config(function($routeProvider) {
 		templateUrl : 'pages/formReviewSubmission.html',
 		controller : 'formReviewSubmissionController'
 	})
+	.when('/landing', {
+		templateUrl : 'pages/landing.html',
+		controller : 'landingController'
+	})
 });
 
 myApp.controller('FormEditController', ['$scope', '$http', '$location', '$route', function($scope, $http, $location, $route) {
