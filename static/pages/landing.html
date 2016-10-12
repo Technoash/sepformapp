@@ -1,2 +1,68 @@
-<h1>Welcome to perForm</h1>
-<h2>Please log in</h2>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>perForm</title>
+  <style>
+    /* Add a gray background color and some padding to the footer */
+    footer {
+      background-color: #f2f2f2;
+      padding: 25px;
+    }
+
+    .carousel-inner img {
+      width: 100%; /* Set width to 100% */
+      min-height: 200px;
+    }
+
+    /* Hide the carousel text when the screen is less than 600 pixels wide */
+    @media (max-width: 600px) {
+      .carousel-caption {
+        display: none; 
+      }
+    }
+  </style>
+</head>
+
+<body>
+<div class="container">
+<div class="row">
+  <div class="col-sm-8 col-sm-offset-2">
+    <div id="myCarousel" class="carousel slide" data-ride="carousel">
+      <div class="carousel-inner" role="listbox">
+        <div class="item active">
+          <img src="pages/landing.jpg" alt="Image">
+          <div class="carousel-caption">
+            <h3>Welcome to perForm</h3>
+            <p>Form Management System</p>
+          </div>      
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<hr>
+</div>
+
+<div class="container text-center">    
+  <br>
+  <div class="row">
+    <div class="col-sm-3 form-group">
+    <span class="fa fa-folder-open fa-2x"></span>
+    	<p>The core mission of perForm is to allow small, growing businesses and large businesses alike the ability to manage their forms and paperwork in an intuitive, lightweight, online platform.</p>
+    </div>
+    <div class="col-sm-3"> 
+      <span class="fa fa-wpforms fa-2x"></span>
+    	<p>Managers can set up new forms for their employees to fill out. Once completed Managers will be notified so they can review the form and provide feedback</p>
+    </div>
+    <div class="col-sm-3"> 
+      <span class="fa fa-comments fa-2x"></span>
+    	<p>Need to send a quick message to a colleague? Maybe there you want to attach some comments to a submission? perForm allows you to quickly make remarks on submissions to save you time.</p>
+    </div>
+    <div class="col-sm-3"> 
+      <span class="fa fa-group fa-2x"></span>
+    	<p>As your business grows so will your perForm. Easily add new Employees and new Managers to grow your online forms system.</p>
+    </div>
+  <hr>
+</div>
+</body>
+</html>
