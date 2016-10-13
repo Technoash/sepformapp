@@ -5,10 +5,10 @@
 <link href="toastr/toastr.min.css" rel="stylesheet"/>
 <link rel="stylesheet" href="site.css">
 
-<script src="jquery-3.1.0.min.js"></script>
-<script src="angular.min.js"></script>
-<script src="angular-ui-bootstrap.min.js"></script>
-<script src="angular-route.min.js"></script>
+<script src="jquery/jquery-3.1.0.min.js"></script>
+<script src="angular/angular.min.js"></script>
+<script src="angular/angular-ui-bootstrap.min.js"></script>
+<script src="angular/angular-route.min.js"></script>
 <script src="bootstrap/bootstrap.min.js"></script>
 <script src="toastr/toastr.min.js"></script>
 <script src="site.js"></script>
@@ -22,7 +22,8 @@
             <nav class="navbar navbar-default">
             <div class="container">
                 <div class="navbar-header">
-                    <a class="navbar-brand" href="#/">perForm {{ sessionRemaining }}</a>
+                    <a ng-if="!$session.loggedIn()" class="navbar-brand" href="#/">perForm</a>
+                    <a ng-if="$session.loggedIn()" class="navbar-brand" href="#/{{$root.auth.account.access}}">perForm</a>
                 </div>
 
                 <ul class="nav navbar-nav navbar-right">
