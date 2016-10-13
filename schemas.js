@@ -40,21 +40,15 @@ module.exports = function (mongoose) {
 			fieldID: {type: Schema.Types.ObjectId, required: true}
 		})],
 		created: {type: Date, default: Date.now},
-		status: {type: String, required: true, enum: ['submitted', 'saved', 'accepted', 'declined', 'returned']}
+		state: {type: String, required: true, enum: ['submitted', 'saved', 'accepted', 'declined', 'returned']}
 	}));
 
-	mongoose.model('Comment', new Schema({
-		submission: {type: Schema.Types.ObjectId, required: true},
-		created: {type: Date, default: Date.now},
-		author: {type: Schema.Types.ObjectId, required: true},
-		content: {type: String, required: true},
-		public: {type: Boolean, required: true}
-	}));
-
+	//comments and state changes are both stored in 'Notification'
 	mongoose.model('Notification', new Schema({
 		submission: {type: Schema.Types.ObjectId, required: true},
 		created: {type: Date, default: Date.now},
-		for: {type: Schema.Types.ObjectId, required: true},
-		content: {type: String, required: true}
+		author: {type: Schema.Types.ObjectId, required: true},
+		type: {type: String, required: true, enum: ['comment_manager', 'comment', 'accepted', 'declined', 'returned']},
+		comment_content: {type: String}
 	}));
 };

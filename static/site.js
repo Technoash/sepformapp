@@ -44,6 +44,9 @@ myApp.config(function($routeProvider) {
 			access: 'user'
 		}
 	})
+	.when('/test', {
+		templateUrl : 'pages/viewSubmission.html'
+	})
 	.otherwise({
 		templateUrl : 'pages/notFound.html'
 	})
@@ -95,15 +98,16 @@ myApp.controller('FormEditController', function($scope, $request, $location, $ro
 	}
 });
 
-myApp.controller('HomeController', function($scope, $request) {
-	$scope.formsList = {};
-	$scope.submissionList = {};
+myApp.controller('HomeController', function($scope, $request, $misc) {
+	$scope.forms = {};
+	$scope.submissions = {};
+	$scope.$misc = $misc;
 
 	$scope.loadFormList = function(){
 		$request.get('/homepage').then(function(res){
 			console.log(res);
-			$scope.formsList = res.data.forms;
-			$scope.submissionList = res.data.submissions;
+			$scope.forms = res.data.forms;
+			$scope.submissions = res.data.submissions;
 			$scope.$apply();
 		});
 	}
@@ -124,7 +128,7 @@ myApp.controller('FormManageController', function($scope, $request) {
 	$scope.loadFormList();
 });
 
-myApp.controller('FormFillController', function($scope, $request, $routeParams, $location) {
+myApp.controller('FormFillController', function($scope, $request, $routeParams, $location, $session) {
 	$scope.form = {_id: $routeParams.id};
 	$scope.fields = {};
 	$scope.values = [];
@@ -148,10 +152,9 @@ myApp.controller('FormFillController', function($scope, $request, $routeParams, 
 	}
 
 	$scope.submitForm = function(){
-		console.log({formID: $scope.formID, values: $scope.values});
-		$request.post('/form/submission/new', {formID: $scope.form._id, values: $scope.values})
+		$request.post('/form/submission/new', {form: $scope.form._id, values: $scope.values})
 		.then(function(res){
-			$location.path( "/" );
+			$location.path("/user");
 			$scope.$apply();
 		});
 	}
@@ -227,7 +230,6 @@ myApp.run(function($rootScope, $location, $http, $uibModal, $route, $alert, $ses
 myApp.controller('mainController', function($scope, $rootScope, $http, $alert, $location, $session, $route) {
 	$scope.root = $rootScope;
 	$scope.$session = $session;
-
 	$scope.logOut = function(){
 		$http.post('/auth/logout')
 		.then(function(){
@@ -341,6 +343,23 @@ myApp.factory('$alert', function() {
 		},
 		info: function(message){
 			toastr["info"](message);
+		}
+	};
+});
+
+myApp.factory('$misc', function() {
+	return {
+		filter: function(array, fields){
+			var out = [];
+			for(var i = 0; i < array.length; i++){
+				out.push(_.pick(array[i], fields));
+			}
+			return out
+		},
+		fromID: function(id, collection){
+			for(var i = 0; i < collection.length; i++){
+				if(collection[i]._id == id) return collection[i];
+			}
 		}
 	};
 });

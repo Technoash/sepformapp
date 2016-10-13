@@ -1,0 +1,107 @@
+<style>
+	.commentBox .comment .panel-heading {
+		background-color: #dadada;
+	}
+	.commentBox .comment_manager .panel-heading {
+		background-color: #fbfbfb;
+	}
+	.commentBox .accepted .panel-heading {
+    	background-color: #deffcc;
+	}
+	.commentBox .declined .panel-heading {
+		background-color: #fdccce;
+	}
+	.commentBox .returned .panel-heading {
+		background-color: #d3eff7;
+	}
+	.commentBox h3 {
+		text-align: center;
+		margin-top: 10px;
+	}
+</style>
+
+<div class ="row">
+	<h2 class="text-center">Submission: Form 101 <!-- Form name will be shown here --></h2>
+</div>
+<div class="modal-footer"></div>
+<div class="form-group">
+	<div class="row" style="">
+		<div class="col-sm-7">
+			<div class="panel-group">
+  				<div class="panel panel-warning">
+    				<div class="panel-heading text-center"><h4><strong>Review Form</strong></h4></div>
+    				<div class="panel-body">Form will be listed here</div>
+  				</div>
+			</div>	
+		</div>
+		<div class="col-sm-5">
+			<div class="panel-group commentBox">
+  				<div class="panel panel-default">
+    				<div class="panel-body">
+						<div class="panel panel-default comment">
+							<div class="panel-heading">
+								<strong>myusername</strong> <span class="text-muted">Public 5 days ago</span>
+							</div>
+							<div class="panel-body">
+								LOOOOL WHAT A SHIT SUBMISSIONcomment
+							</div>
+						</div>
+						<div class="panel panel-default comment_manager">
+							<div class="panel-heading">
+								<strong>myusername</strong> <span class="text-muted">5 days ago</span>
+							</div>
+							<div class="panel-body">
+								LOOOOL WHAT A SHIT SUBMISSION manager
+							</div>
+						</div>
+						<div class="panel panel-default accepted">
+							<div class="panel-heading">
+								<strong>myusername</strong> <span class="text-muted">5 days ago</span>
+							</div>
+							<div class="panel-body">
+								<h3>Accepted</h3>
+							</div>
+						</div>
+						<div class="panel panel-default declined">
+							<div class="panel-heading">
+								<strong>myusername</strong> <span class="text-muted">5 days ago</span>
+							</div>
+							<div class="panel-body">
+								<h3>Declined</h3>
+							</div>
+						</div>
+						<div class="panel panel-default returned">
+							<div class="panel-heading">
+								<strong>myusername</strong> <span class="text-muted">5 days ago</span>
+							</div>
+							<div class="panel-body">
+								<h3>Sent Back</h3>
+							</div>
+						</div>
+
+    				</div>
+    				<div class="panel-footer" >
+						<div class="input-group">
+							<input type="text" class="form-control" placeholder="Comment..">
+							<div class="input-group-btn">
+								<button type="button" class="btn btn-primary">Private</button>
+								<button type="button" class="btn btn-default">Public</button>
+							</div>
+						</div>
+					</div>
+    			</div>	
+  			</div>
+		</div>
+	</div>	
+</div>
+<div class="modal-footer">
+	<div class="form-group">
+		<div class="row">
+			<div class="btn-group" role="group" aria-label="Basic example">
+				<button type="button" class="btn btn-success">Accept</button>
+				<button type="button" class="btn btn btn-danger">Decline</button>
+				<button type="button" class="btn btn-info">Send Back</button>
+			</div>
+		</div>
+	</div>
+</div>

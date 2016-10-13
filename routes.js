@@ -19,6 +19,7 @@ module.exports = function (webServer, mongoose) {
 	var Field = mongoose.model('Field');
 	var Account = mongoose.model('Account');
 	var Session = mongoose.model('Session');
+	var Submission = mongoose.model('Submission');
 
 
 	//turns this: [{_id: "nejktg80f341uono3", name: "ashneil", city: "Sydney"}]
@@ -213,7 +214,13 @@ module.exports = function (webServer, mongoose) {
 		exec.push(
 			Form.find({}, "_id name").where('enabled').equals(true)
 			.then(a => {
-				build.forms = flatten(a);
+				build.forms = a;
+			})
+		)
+		exec.push(
+			Submission.find({account: req.session.account._id}, "_id form created")
+			.then(a => {
+				build.submissions = a;
 			})
 		)
 		Promise.all(exec)
@@ -255,8 +262,8 @@ module.exports = function (webServer, mongoose) {
 		var validation = inspector.validate({
 			type: 'object',
 			properties: {
-				formID: {
-					type: 'string'
+				form: {
+					type: 'string',
 				},
 				values: {
 					type: "array",
@@ -272,11 +279,67 @@ module.exports = function (webServer, mongoose) {
 		}, req.body);
 
 		if(!validation.valid) return res.status(500).send("request validation failed.");
-		return res.send('good');
+		///return res.send('good');
+
+		function NotFound(clientMessage) {
+			this.clientMessage = clientMessage;
+		}
+		NotFound.prototype = Object.create(Error.prototype);
+
+		function ValidationError(clientMessage) {
+			this.clientMessage = clientMessage;
+		}
+		ValidationError.prototype = Object.create(Error.prototype);
+
 		var form;
-		
-		form
-		.catch(RequestError, e => {
+		Form.findOne( { _id: req.body.form})
+		.then(result => {
+			if(result == null) throw new NotFound('Form not found');
+			form = result;
+			//can be reused
+			return Field.find().where('_id').in(form.fields);
+
+		})
+		.then(fields => {
+			console.log(fields)
+
+			//ensure all required fields exist
+			for(var i = 0; i < fields.length; i++){
+				if(fields[i].required) {
+					var found = false;
+					for(var a = 0; a < req.body.values.length; a++){
+						///need to check for validity of each type here; right now just checking if string is empty
+						if(fields[i]._id == req.body.values[a].fieldID && req.body.values[a].value != ""){
+							found = true;
+							break;
+						};
+					}
+					if(!found) throw new ValidationError("One or more required fields not provided");
+				}
+			}
+			
+			//make sure all the request fields are fields in the database
+			for(var a = 0; a < req.body.values.length; a++){
+				var found = false;
+				for(var i = 0; i < fields.length; i++){
+					if(fields[i]._id == req.body.values[a].fieldID) {
+						found = true;
+						break;
+					}
+				}
+				if(!found) throw new ValidationError("One or more fields not found");
+			}
+
+			return Submission.create({account: req.session.account._id, form: req.body.form, values: req.body.values, state: 'submitted'});
+		})
+		.then((result) => {
+			console.log(result._id);
+			res.send('submitted');
+		})
+		.catch(NotFound, e => {
+			res.status(400).send(e.clientMessage);
+		})
+		.catch(ValidationError, e => {
 			res.status(400).send(e.clientMessage);
 		})
 		.catch(e =>{

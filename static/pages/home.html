@@ -31,7 +31,7 @@
     			<h3>Forms</h3>
 			</div>
 	  		<div class="panel-body">
-	    		<div class="noteBox red" ng-repeat="(formID, form) in formsList" go-click="form/fill/{{ formID }}">
+	    		<div class="noteBox red" ng-repeat="form in forms" go-click="form/fill/{{ form._id }}">
 					<span class="onp-sl-long">{{ form.name }}</span>
 				</div>
 			</div>
@@ -44,11 +44,8 @@
 	  		<div class="panel-heading">
     			<h3>Submissions</h3>
 			</div>
-	  		<div class="noteBox red">
-				<span class="onp-sl-long">Incomplete</span>
-			</div>
-			<div class="noteBox blue">
-				<span class="onp-sl-long">Saved Form - Monthly Report...</span>
+	  		<div ng-repeat="submission in submissions" class="noteBox red">
+				<span class="onp-sl-long">{{ $misc.fromID(submission.form, forms).name }}: {{ submission.created | date:'d/M/yy h:mm a'}}</span>
 			</div>
 	  	</div>
 	</div>
