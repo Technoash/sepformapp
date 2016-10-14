@@ -33,7 +33,7 @@ myApp.config(function($routeProvider) {
 		templateUrl : 'pages/formEdit.html',
 		controller  : 'FormEditController',
 		data: {
-			access: 'user',
+			access: 'manager',
 			new: true
 		}
 	})
@@ -177,6 +177,24 @@ myApp.directive( 'goClick', function($location) {
 
 myApp.run(function($rootScope, $location, $http, $uibModal, $route, $alert, $session) {
 	$rootScope.$on('$routeChangeStart', function (event, toState, toParams) {
+		if($rootScope.auth.unchecked){
+			event.preventDefault();
+			$rootScope.auth.unchecked = false;
+			//site just loaded. need to check if a valid cookie exists
+			
+			$http.get('/auth/check')
+			.then(function(res){
+				//server says I have a valid cookie and session. account details in res
+				$rootScope.auth.account = res.data.account;
+				$alert.info("Logged in as <i>" + $rootScope.auth.account.email + "</i>");
+				$route.reload();
+			})
+			.catch(function(){
+				$route.reload();
+			});
+			return;
+		}
+
 		//continue if page doesn't have access property
 		if(typeof toState === 'undefined') return;
 		if(typeof toState.data === 'undefined') return;
@@ -187,31 +205,7 @@ myApp.run(function($rootScope, $location, $http, $uibModal, $route, $alert, $ses
 			console.log('preventing', toState.originalPath);
 			event.preventDefault();
 
-			if($rootScope.auth.unchecked){
-				$rootScope.auth.unchecked = false;
-				//site just loaded. need to check if a valid cookie exists
-				
-				$http.get('/auth/check')
-				.then(function(res){
-					//server says I have a valid cookie and session. account details in res
-					$rootScope.auth.account = res.data.account;
-					$alert.info("Logged in as <i>" + $rootScope.auth.account.email + "</i>");
-					$route.reload();
-				})
-				.catch(function(e){
-					//no valid session
-					$alert.info("Please log in");
-					$session.loginModal().result
-					.then(function(){
-						console.log('yolo once', toState.originalPath);
-						$route.reload();
-					});
-				})
-				return;
-			}
-
-			//checked if we have a pre-existing cookie already
-			$alert.info("You must be logged in to use perForm. Please log in");
+			$alert.info("Please log in");
 			$session.loginModal().result
 			.then(function(){
 				$route.reload();
@@ -230,6 +224,7 @@ myApp.run(function($rootScope, $location, $http, $uibModal, $route, $alert, $ses
 myApp.controller('mainController', function($scope, $rootScope, $http, $alert, $location, $session, $route) {
 	$scope.root = $rootScope;
 	$scope.$session = $session;
+
 	$scope.logOut = function(){
 		$http.post('/auth/logout')
 		.then(function(){
@@ -297,7 +292,7 @@ function loginModalController($scope, $http, $rootScope, $uibModalInstance, aler
 	}
 }
 
-myApp.factory('$session', function($rootScope, $uibModal) {
+myApp.factory('$session', function($rootScope, $uibModal, $http, $alert) {
 	return {
 		getAccount: function(){
 			if(typeof $rootScope.auth.account !== 'undefined')
@@ -326,6 +321,18 @@ myApp.factory('$session', function($rootScope, $uibModal) {
 			      	}
 			      }
 		    });
+		},
+		authCheck: function(){
+			return new Promise(function(resolve, reject){
+				$http.get('/auth/check')
+				.then(function(res){
+					//server says I have a valid cookie and session. account details in res
+					$rootScope.auth.account = res.data.account;
+					$alert.info("Logged in as <i>" + $rootScope.auth.account.email + "</i>");
+					resolve();
+				})
+				.catch(function(e){reject(e)})
+			});
 		}
 	};
 });
