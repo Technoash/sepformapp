@@ -1,5 +1,8 @@
 var myApp = angular.module('myApp', ['ngRoute', 'ui.bootstrap']).run(function($rootScope){
 	$rootScope.auth = {unchecked: true};
+	toastr.options = {
+		"positionClass": "toast-bottom-right"
+	}
 });
 
 myApp.config(function($routeProvider) {
@@ -87,7 +90,7 @@ myApp.controller('FormEditController', function($scope, $request, $location, $ro
 	$scope.submitNewForm = function(){
 		$request.post('/form/new', {fields: $scope.fields, form: $scope.form})
 		.then(function(res){
-			$location.path( "/form/manage" );
+			$location.path( "/manager" );
 			$alert.success('Form created');
 			$scope.$apply();
 		});
@@ -122,6 +125,7 @@ myApp.controller('FormManageController', function($scope, $request) {
 	$scope.loadFormList = function(){
 		$request.get('/form/manage').then(function(res){
 			$scope.formsList = res.data;
+			$scope.$apply();
 		});
 	}
 
@@ -310,6 +314,10 @@ myApp.factory('$session', function($rootScope, $uibModal, $http, $alert) {
 			if(typeof $rootScope.auth.account === 'undefined' || !$rootScope.auth.account) return false;
 			return access == $rootScope.auth.account.access || $rootScope.auth.account.access == 'manager';
 		},
+		getAccess: function(access){
+			if(typeof $rootScope.auth.account === 'undefined' || !$rootScope.auth.account) return false;
+			return access == $rootScope.auth.account.access;
+		},
 		loginModal: function(alert){
 			return $uibModal.open({
 			      templateUrl: 'pages/loginModal.html',
@@ -321,18 +329,6 @@ myApp.factory('$session', function($rootScope, $uibModal, $http, $alert) {
 			      	}
 			      }
 		    });
-		},
-		authCheck: function(){
-			return new Promise(function(resolve, reject){
-				$http.get('/auth/check')
-				.then(function(res){
-					//server says I have a valid cookie and session. account details in res
-					$rootScope.auth.account = res.data.account;
-					$alert.info("Logged in as <i>" + $rootScope.auth.account.email + "</i>");
-					resolve();
-				})
-				.catch(function(e){reject(e)})
-			});
 		}
 	};
 });
@@ -340,16 +336,16 @@ myApp.factory('$session', function($rootScope, $uibModal, $http, $alert) {
 myApp.factory('$alert', function() {
 	return {
 		success: function(message){
-			toastr["success"](message);
+			return toastr["success"](message);
 		},
 		warning: function(message){
-			toastr["warning"](message);
+			return toastr["warning"](message);
 		},
 		error: function(message){
-			toastr["error"](message);
+			return toastr["error"](message);
 		},
 		info: function(message){
-			toastr["info"](message);
+			return toastr["info"](message);
 		}
 	};
 });
@@ -373,11 +369,16 @@ myApp.factory('$misc', function() {
 
 //good luck figuring this one out
 myApp.factory('$request', function($http, $uibModal, $alert, $session) {
+	
 	var message = {title: "Auth error", message: "Please re-login before making this request."};
 	function comb(req, resolve, reject){
+		var resolved = false;
+		setTimeout(function(){
+			if(!resolved) console.log($alert.info('Your request is processing. Please be patient'));
+		}, 1000);
 		req()
 		.then(function(data){
-			console.log('resolved', data);
+			resolved = true;
 			resolve(data);
 		})
 		.catch(function(e){
@@ -400,12 +401,12 @@ myApp.factory('$request', function($http, $uibModal, $alert, $session) {
 	return obj = {
 		get: function(path){
 			return new Promise(function(resolve, reject){
-				comb(()=>{return $http.get(path)}, resolve, reject);
+				comb(function(){return $http.get(path)}, resolve, reject);
 			})
 		},
 		post: function(path, data){
 			return new Promise(function(resolve, reject){
-				comb(()=>{return $http.post(path, data)}, resolve, reject);
+				comb(function(){return $http.post(path, data)}, resolve, reject);
 			})
 		}
 	};
