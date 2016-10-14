@@ -21,6 +21,21 @@
 		text-align: center;
 		margin-top: 10px;
 	}
+	.submissionBox .submitted .panel-heading {
+		background-color: #fbfbfb;
+	}
+	.submissionBox .accepted .panel-heading {
+    	background-color: #deffcc;
+    	color: #3c763d;
+	}
+	.submissionBox .declined .panel-heading {
+		background-color: #fdccce;
+		color: #a94442;
+	}
+	.submissionBox .returned .panel-heading {
+		background-color: #d3eff7;
+		color: #31708f;
+	}
 </style>
 
 <!--<div class ="row">
@@ -29,26 +44,22 @@
 
 <div class="form-group">
 	<div class="row" style="">
-		<div class="col-sm-7">
-			<div class="panel-group">
-  				<div class="panel panel-warning">
-    				<div class="panel-heading text-center"><h4><strong>New {{ form.name }} Submission</strong></h4></div>
-    				<div class="panel-body">
+		<div class="col-sm-7 submissionBox">
+			<div class="panel panel-default" ng-class="{submitted: state == 'submitted' || state == 'new'}">
+				<div class="panel-heading text-center"><h4><strong>New {{ form.name }} Submission</strong></h4></div>
+				<div class="panel-body">
 
-<form class="col-md-8 form-horizontal">
+					<form class="col-md-8 form-horizontal">
+						<div ng-repeat="field in fields" class="form-group">
+							<label class="col-sm-2 control-label">{{ field.name }}</label>
+							<div class="col-sm-10">
+								<input ng-if="field.type == 'text'" ng-model="valueByID(field._id).value" type="text" class="form-control" placeholder="{{ field.helper }}">
+							</div>
+						</div>
+					</form>
 
-	<div ng-repeat="field in fields" class="form-group">
-		<label class="col-sm-2 control-label">{{ field.name }}</label>
-		<div class="col-sm-10">
-			<input ng-if="field.type == 'text'" ng-model="valueByID(field._id).value" type="text" class="form-control" placeholder="{{ field.helper }}">
-		</div>
-	</div>
-</form>
-
-
-    				</div>
-  				</div>
-			</div>	
+				</div>
+			</div>
 		</div>
 		<div class="col-sm-5" ng-if="state == 'edit' || state == 'view'">
 			<div class="panel-group commentBox">

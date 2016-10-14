@@ -19,7 +19,7 @@
 - check request auth
 - go over error catches
 - consolidate fields
-- ~~loading animations~~ (please be patient notification)
+- ~~loading animations~~ ("please be patient" notification)
 - consolidate error objects
 - split up into modules and files
 

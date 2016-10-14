@@ -172,8 +172,8 @@ myApp.controller('FormFillController', function($scope, $request, $routeParams, 
 		}
 	}
 
-	$scope.submitForm = function(){
-		$request.post('/form/submission/new', {form: $scope.form._id, values: $scope.values})
+	$scope.submitForm = function(saved){
+		$request.post('/form/submission/new', {form: $scope.form._id, values: $scope.values, saved: saved})
 		.then(function(res){
 			$location.path("/user");
 			$scope.$apply();

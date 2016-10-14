@@ -274,6 +274,9 @@ module.exports = function (webServer, mongoose) {
 							fieldID: {type: "string"}
 						}
 					}
+				},
+				saved: {
+					type: 'boolean'
 				}
 			}
 		}, req.body);
@@ -303,19 +306,21 @@ module.exports = function (webServer, mongoose) {
 		.then(fields => {
 			console.log('fields', fields)
 
-			//ensure all required fields exist
-			for(var i = 0; i < fields.length; i++){
-				var found = false;
-				for(var a = 0; a < req.body.values.length; a++){
-					///need to check for validity of each type here; right now just checking if string is empty
-					if(fields[i]._id == req.body.values[a].fieldID && (!fields[i].required || req.body.values[a].value != "")){
-						found = true;
-						break;
-					};
+			if(!req.body.saved){
+				//ensure all required fields exist
+				for(var i = 0; i < fields.length; i++){
+					var found = false;
+					for(var a = 0; a < req.body.values.length; a++){
+						///need to check for validity of each type here; right now just checking if string is empty
+						if(fields[i]._id == req.body.values[a].fieldID && (!fields[i].required || req.body.values[a].value != "")){
+							found = true;
+							break;
+						};
+					}
+					if(!found) throw new ValidationError("One or more required fields not provided");
 				}
-				if(!found) throw new ValidationError("One or more required fields not provided");
 			}
-			
+
 			//make sure all the request fields are fields in the database
 			for(var a = 0; a < req.body.values.length; a++){
 				var found = false;
@@ -328,7 +333,7 @@ module.exports = function (webServer, mongoose) {
 				if(!found) throw new ValidationError("One or more fields not found");
 			}
 
-			return Submission.create({account: req.session.account._id, form: req.body.form, values: req.body.values, state: 'submitted'});
+			return Submission.create({account: req.session.account._id, form: req.body.form, values: req.body.values, state: (req.body.saved) ? 'saved' : 'submitted'});
 		})
 		.then((result) => {
 			console.log(result._id);
