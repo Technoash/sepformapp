@@ -47,6 +47,9 @@ myApp.config(function($routeProvider) {
 	.when('/test', {
 		templateUrl : 'pages/viewSubmission.html'
 	})
+	.when('/somerandompage', {
+		templateUrl : 'pages/viewSubmissionEdit.html'
+	})
 	.otherwise({
 		templateUrl : 'pages/notFound.html'
 	})
