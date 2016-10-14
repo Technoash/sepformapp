@@ -40,15 +40,29 @@ myApp.config(function($routeProvider) {
 			new: true
 		}
 	})
-	.when('/form/fill/:id', {
-		templateUrl : 'pages/formFill.html',
+	.when('/form/fill/:formID', {
+		templateUrl : 'pages/submission.html',
 		controller  : 'FormFillController',
 		data: {
-			access: 'user'
+			access: 'user',
+			state: 'new'
 		}
 	})
-	.when('/test', {
-		templateUrl : 'pages/viewSubmission.html'
+	.when('/submission/fill/:submissionID', {
+		templateUrl : 'pages/submission.html',
+		controller  : 'FormFillController',
+		data: {
+			access: 'user',
+			state: 'edit'
+		}
+	})
+	.when('/submission/view/:submissionID', {
+		templateUrl : 'pages/submission.html',
+		controller  : 'FormFillController',
+		data: {
+			access: 'user',
+			state: 'view'
+		}
 	})
 	.otherwise({
 		templateUrl : 'pages/notFound.html'
@@ -131,8 +145,9 @@ myApp.controller('FormManageController', function($scope, $request) {
 	$scope.loadFormList();
 });
 
-myApp.controller('FormFillController', function($scope, $request, $routeParams, $location, $session) {
-	$scope.form = {_id: $routeParams.id};
+myApp.controller('FormFillController', function($scope, $request, $routeParams, $location, $session, $route) {
+	$scope.state = $route.current.$$route.data.state;
+	$scope.form = {_id: $routeParams.formID};
 	$scope.fields = {};
 	$scope.values = [];
 

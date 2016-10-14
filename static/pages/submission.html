@@ -1,9 +1,12 @@
 <style>
+	.commentBox .submitted .panel-heading {
+		background-color: #fbfbfb;
+	}
 	.commentBox .comment .panel-heading {
-		background-color: #dadada;
+		background-color: #ececec;
 	}
 	.commentBox .comment_manager .panel-heading {
-		background-color: #fbfbfb;
+		background-color: #dadada;
 	}
 	.commentBox .accepted .panel-heading {
     	background-color: #deffcc;
@@ -20,24 +23,45 @@
 	}
 </style>
 
-<div class ="row">
-	<h2 class="text-center">Submission: Form 101 <!-- Form name will be shown here --></h2>
-</div>
-<div class="modal-footer"></div>
+<!--<div class ="row">
+	<h2 class="text-center">Submission: {{ form.name }}</h2>
+</div>-->
+
 <div class="form-group">
 	<div class="row" style="">
 		<div class="col-sm-7">
 			<div class="panel-group">
   				<div class="panel panel-warning">
-    				<div class="panel-heading text-center"><h4><strong>Review Form</strong></h4></div>
-    				<div class="panel-body">Form will be listed here</div>
+    				<div class="panel-heading text-center"><h4><strong>New {{ form.name }} Submission</strong></h4></div>
+    				<div class="panel-body">
+
+<form class="col-md-8 form-horizontal">
+
+	<div ng-repeat="field in fields" class="form-group">
+		<label class="col-sm-2 control-label">{{ field.name }}</label>
+		<div class="col-sm-10">
+			<input ng-if="field.type == 'text'" ng-model="valueByID(field._id).value" type="text" class="form-control" placeholder="{{ field.helper }}">
+		</div>
+	</div>
+</form>
+
+
+    				</div>
   				</div>
 			</div>	
 		</div>
-		<div class="col-sm-5">
+		<div class="col-sm-5" ng-if="state == 'edit' || state == 'view'">
 			<div class="panel-group commentBox">
   				<div class="panel panel-default">
     				<div class="panel-body">
+						<div class="panel panel-default submitted">
+							<div class="panel-heading">
+								<strong>myusername</strong> <span class="text-muted">Public 5 days ago</span>
+							</div>
+							<div class="panel-body">
+								created submission
+							</div>
+						</div>
 						<div class="panel panel-default comment">
 							<div class="panel-heading">
 								<strong>myusername</strong> <span class="text-muted">Public 5 days ago</span>
@@ -84,7 +108,7 @@
 						<div class="input-group">
 							<input type="text" class="form-control" placeholder="Comment..">
 							<div class="input-group-btn">
-								<button type="button" class="btn btn-primary">Private</button>
+								<button type="button" class="btn btn-primary">Manager</button>
 								<button type="button" class="btn btn-default">Public</button>
 							</div>
 						</div>
@@ -97,11 +121,13 @@
 <div class="modal-footer">
 	<div class="form-group">
 		<div class="row">
-			<div class="btn-group" role="group" aria-label="Basic example">
+			<div ng-if="state == 'edit' || state == 'view'" class="btn-group" role="group" aria-label="Basic example">
 				<button type="button" class="btn btn-success">Accept</button>
 				<button type="button" class="btn btn btn-danger">Decline</button>
 				<button type="button" class="btn btn-info">Send Back</button>
 			</div>
+			<button ng-click="submitForm(true);" ng-if="state == 'edit' || state == 'new'" type="button" class="btn btn-default">Save</button>
+			<button ng-click="submitForm(false);" ng-if="state == 'edit' || state == 'new'" type="button" class="btn btn-primary">Submit</button>
 		</div>
 	</div>
 </div>

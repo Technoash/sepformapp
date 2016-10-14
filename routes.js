@@ -218,7 +218,7 @@ module.exports = function (webServer, mongoose) {
 			})
 		)
 		exec.push(
-			Submission.find({account: req.session.account._id}, "_id form created")
+			Submission.find({account: req.session.account._id}, "_id form created state")
 			.then(a => {
 				build.submissions = a;
 			})
@@ -231,7 +231,7 @@ module.exports = function (webServer, mongoose) {
 
 	webServer.get('/form/get/:id', validateAccess('user'), function(req, res) {
 		var form;
-		
+		//handle param undefined
 		var query = Form.findOne({}, "_id name fields enabled").where('_id').equals(req.params.id)
 		if(req.session.account.access == 'user') query = query.where('enabled').equals(true);
 		
@@ -277,7 +277,7 @@ module.exports = function (webServer, mongoose) {
 				}
 			}
 		}, req.body);
-
+		console.log('req body', req.body)
 		if(!validation.valid) return res.status(500).send("request validation failed.");
 		///return res.send('good');
 
@@ -301,21 +301,19 @@ module.exports = function (webServer, mongoose) {
 
 		})
 		.then(fields => {
-			console.log(fields)
+			console.log('fields', fields)
 
 			//ensure all required fields exist
 			for(var i = 0; i < fields.length; i++){
-				if(fields[i].required) {
-					var found = false;
-					for(var a = 0; a < req.body.values.length; a++){
-						///need to check for validity of each type here; right now just checking if string is empty
-						if(fields[i]._id == req.body.values[a].fieldID && req.body.values[a].value != ""){
-							found = true;
-							break;
-						};
-					}
-					if(!found) throw new ValidationError("One or more required fields not provided");
+				var found = false;
+				for(var a = 0; a < req.body.values.length; a++){
+					///need to check for validity of each type here; right now just checking if string is empty
+					if(fields[i]._id == req.body.values[a].fieldID && (!fields[i].required || req.body.values[a].value != "")){
+						found = true;
+						break;
+					};
 				}
+				if(!found) throw new ValidationError("One or more required fields not provided");
 			}
 			
 			//make sure all the request fields are fields in the database

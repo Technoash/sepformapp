@@ -23,6 +23,7 @@
 				<span class="onp-sl-long">Saved Form - Monthly Report...</span>
 			</div>
 	  	</div>
+
 	</div>
 
 	<div class="col-sm-4">
@@ -40,13 +41,36 @@
 
 
 	<div class="col-sm-4">
-		<div class="home-panel panel panel-default">
-	  		<div class="panel-heading">
-    			<h3>Submissions</h3>
-			</div>
-	  		<div ng-repeat="submission in submissions" class="noteBox red">
-				<span class="onp-sl-long">{{ $misc.fromID(submission.form, forms).name }}: {{ submission.created | date:'d/M/yy h:mm a'}}</span>
+
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="home-panel panel panel-default">
+					<div class="panel-heading">
+						<h3>Incomplete Submissions</h3>
+					</div>
+					<div class="panel-body">
+			  			<div ng-repeat="submission in submissions" ng-if="submission.state == 'returned' || submission.state == 'saved'" class="noteBox red">
+							<span class="onp-sl-long">{{ $misc.fromID(submission.form, forms).name }}: {{ submission.created | date:'d/M/yy h:mm a'}}</span>
+						</div>
+			  		</div>
+				</div>
 			</div>
 	  	</div>
+
+	  	<div class="row">
+			<div class="col-sm-12">
+				<div class="home-panel panel panel-default">
+			  		<div class="panel-heading">
+		    			<h3>Submissions</h3>
+					</div>
+			  		<div class="panel-body">
+			  			<div ng-repeat="submission in submissions" ng-if="submission.state == 'submitted' || submission.state == 'accepted' || submission.state == 'declined'" class="noteBox red">
+							<span class="onp-sl-long">{{ $misc.fromID(submission.form, forms).name }}: {{ submission.created | date:'d/M/yy h:mm a'}}</span>
+						</div>
+			  		</div>
+			  	</div>
+		  	</div>
+	  	</div>
+
 	</div>
 </div>

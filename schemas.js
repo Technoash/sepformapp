@@ -36,7 +36,7 @@ module.exports = function (mongoose) {
 		account: {type: Schema.Types.ObjectId, required: true},
 		form: {type: Schema.Types.ObjectId, required: true},
 		values: [new Schema({
-			value: {type: String, required: true},
+			value: {type: String, default: ""},
 			fieldID: {type: Schema.Types.ObjectId, required: true}
 		})],
 		created: {type: Date, default: Date.now},
@@ -48,7 +48,7 @@ module.exports = function (mongoose) {
 		submission: {type: Schema.Types.ObjectId, required: true},
 		created: {type: Date, default: Date.now},
 		author: {type: Schema.Types.ObjectId, required: true},
-		type: {type: String, required: true, enum: ['comment_manager', 'comment', 'accepted', 'declined', 'returned']},
+		type: {type: String, required: true, enum: ['comment_manager', 'comment', 'accepted', 'declined', 'returned', 'submitted']},
 		comment_content: {type: String}
 	}));
 };
