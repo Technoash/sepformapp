@@ -2,7 +2,8 @@
 
 ## Todo
 ### big stuff
-- finish submit, save, edit submission
+- ~~submit submission~~
+- save and edit submission
 - view submission
 - submission comment sidebar
 - notifications
@@ -10,14 +11,18 @@
 - account settings
 - create account, email
 - edit form
-- save submission
 - preview new form
+- other field types
+
 
 ### tidy up
 - check request auth
-- login rate limit
-- other field types
 - go over error catches
 - consolidate fields
 - loading animations
 - consolidate error objects
+
+
+## Moved to second release
+- Manager to manager messages (comments offer similar functionality)
+- login rate limit

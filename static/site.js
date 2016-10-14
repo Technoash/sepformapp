@@ -108,7 +108,6 @@ myApp.controller('HomeController', function($scope, $request, $misc) {
 
 	$scope.loadFormList = function(){
 		$request.get('/homepage').then(function(res){
-			console.log(res);
 			$scope.forms = res.data.forms;
 			$scope.submissions = res.data.submissions;
 			$scope.$apply();
@@ -162,6 +161,7 @@ myApp.controller('FormFillController', function($scope, $request, $routeParams, 
 			$scope.$apply();
 		});
 	}
+	//handle err
 	$scope.loadForm();
 });
 
@@ -181,6 +181,7 @@ myApp.directive( 'goClick', function($location) {
 
 myApp.run(function($rootScope, $location, $http, $uibModal, $route, $alert, $session) {
 	$rootScope.$on('$routeChangeStart', function (event, toState, toParams) {
+
 		if($rootScope.auth.unchecked){
 			event.preventDefault();
 			$rootScope.auth.unchecked = false;
@@ -369,24 +370,25 @@ myApp.factory('$misc', function() {
 
 //good luck figuring this one out
 myApp.factory('$request', function($http, $uibModal, $alert, $session) {
-	
-	var message = {title: "Auth error", message: "Please re-login before making this request."};
 	function comb(req, resolve, reject){
 		var resolved = false;
+
+		//if the request has not resolved after one second, show a notification
 		setTimeout(function(){
-			if(!resolved) console.log($alert.info('Your request is processing. Please be patient'));
+			if(!resolved) $alert.info('Your request is processing. Please be patient');
 		}, 1000);
+
 		req()
 		.then(function(data){
 			resolved = true;
 			resolve(data);
 		})
 		.catch(function(e){
+			resolved = true;
 			if(e.status == 401) {
 				console.log('re-login dialog');
-				message.title = e.data;
 				$alert.info("Your session has expired. Please log in again");
-				$session.loginModal(message).result
+				$session.loginModal({title: e.data, message: "Please re-login before making this request."}).result
 				.then(function(res){
 					comb(req, resolve, reject);
 				})
@@ -398,7 +400,7 @@ myApp.factory('$request', function($http, $uibModal, $alert, $session) {
 			reject(e);
 		})
 	}
-	return obj = {
+	return {
 		get: function(path){
 			return new Promise(function(resolve, reject){
 				comb(function(){return $http.get(path)}, resolve, reject);
