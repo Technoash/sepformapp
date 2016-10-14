@@ -1,5 +1,8 @@
 var myApp = angular.module('myApp', ['ngRoute', 'ui.bootstrap']).run(function($rootScope){
 	$rootScope.auth = {unchecked: true};
+	toastr.options = {
+		"positionClass": "toast-bottom-right"
+	}
 });
 
 myApp.config(function($routeProvider) {
@@ -33,7 +36,7 @@ myApp.config(function($routeProvider) {
 		templateUrl : 'pages/formEdit.html',
 		controller  : 'FormEditController',
 		data: {
-			access: 'user',
+			access: 'manager',
 			new: true
 		}
 	})
@@ -90,7 +93,7 @@ myApp.controller('FormEditController', function($scope, $request, $location, $ro
 	$scope.submitNewForm = function(){
 		$request.post('/form/new', {fields: $scope.fields, form: $scope.form})
 		.then(function(res){
-			$location.path( "/form/manage" );
+			$location.path( "/manager" );
 			$alert.success('Form created');
 			$scope.$apply();
 		});
@@ -108,7 +111,6 @@ myApp.controller('HomeController', function($scope, $request, $misc) {
 
 	$scope.loadFormList = function(){
 		$request.get('/homepage').then(function(res){
-			console.log(res);
 			$scope.forms = res.data.forms;
 			$scope.submissions = res.data.submissions;
 			$scope.$apply();
@@ -125,6 +127,7 @@ myApp.controller('FormManageController', function($scope, $request) {
 	$scope.loadFormList = function(){
 		$request.get('/form/manage').then(function(res){
 			$scope.formsList = res.data;
+			$scope.$apply();
 		});
 	}
 
@@ -161,6 +164,7 @@ myApp.controller('FormFillController', function($scope, $request, $routeParams, 
 			$scope.$apply();
 		});
 	}
+	//handle err
 	$scope.loadForm();
 });
 
@@ -180,6 +184,25 @@ myApp.directive( 'goClick', function($location) {
 
 myApp.run(function($rootScope, $location, $http, $uibModal, $route, $alert, $session) {
 	$rootScope.$on('$routeChangeStart', function (event, toState, toParams) {
+
+		if($rootScope.auth.unchecked){
+			event.preventDefault();
+			$rootScope.auth.unchecked = false;
+			//site just loaded. need to check if a valid cookie exists
+			
+			$http.get('/auth/check')
+			.then(function(res){
+				//server says I have a valid cookie and session. account details in res
+				$rootScope.auth.account = res.data.account;
+				$alert.info("Logged in as <i>" + $rootScope.auth.account.email + "</i>");
+				$route.reload();
+			})
+			.catch(function(){
+				$route.reload();
+			});
+			return;
+		}
+
 		//continue if page doesn't have access property
 		if(typeof toState === 'undefined') return;
 		if(typeof toState.data === 'undefined') return;
@@ -190,31 +213,7 @@ myApp.run(function($rootScope, $location, $http, $uibModal, $route, $alert, $ses
 			console.log('preventing', toState.originalPath);
 			event.preventDefault();
 
-			if($rootScope.auth.unchecked){
-				$rootScope.auth.unchecked = false;
-				//site just loaded. need to check if a valid cookie exists
-				
-				$http.get('/auth/check')
-				.then(function(res){
-					//server says I have a valid cookie and session. account details in res
-					$rootScope.auth.account = res.data.account;
-					$alert.info("Logged in as <i>" + $rootScope.auth.account.email + "</i>");
-					$route.reload();
-				})
-				.catch(function(e){
-					//no valid session
-					$alert.info("Please log in");
-					$session.loginModal().result
-					.then(function(){
-						console.log('yolo once', toState.originalPath);
-						$route.reload();
-					});
-				})
-				return;
-			}
-
-			//checked if we have a pre-existing cookie already
-			$alert.info("You must be logged in to use perForm. Please log in");
+			$alert.info("Please log in");
 			$session.loginModal().result
 			.then(function(){
 				$route.reload();
@@ -233,6 +232,7 @@ myApp.run(function($rootScope, $location, $http, $uibModal, $route, $alert, $ses
 myApp.controller('mainController', function($scope, $rootScope, $http, $alert, $location, $session, $route) {
 	$scope.root = $rootScope;
 	$scope.$session = $session;
+
 	$scope.logOut = function(){
 		$http.post('/auth/logout')
 		.then(function(){
@@ -300,7 +300,7 @@ function loginModalController($scope, $http, $rootScope, $uibModalInstance, aler
 	}
 }
 
-myApp.factory('$session', function($rootScope, $uibModal) {
+myApp.factory('$session', function($rootScope, $uibModal, $http, $alert) {
 	return {
 		getAccount: function(){
 			if(typeof $rootScope.auth.account !== 'undefined')
@@ -317,6 +317,10 @@ myApp.factory('$session', function($rootScope, $uibModal) {
 		haveAccess: function(access){
 			if(typeof $rootScope.auth.account === 'undefined' || !$rootScope.auth.account) return false;
 			return access == $rootScope.auth.account.access || $rootScope.auth.account.access == 'manager';
+		},
+		getAccess: function(access){
+			if(typeof $rootScope.auth.account === 'undefined' || !$rootScope.auth.account) return false;
+			return access == $rootScope.auth.account.access;
 		},
 		loginModal: function(alert){
 			return $uibModal.open({
@@ -336,16 +340,16 @@ myApp.factory('$session', function($rootScope, $uibModal) {
 myApp.factory('$alert', function() {
 	return {
 		success: function(message){
-			toastr["success"](message);
+			return toastr["success"](message);
 		},
 		warning: function(message){
-			toastr["warning"](message);
+			return toastr["warning"](message);
 		},
 		error: function(message){
-			toastr["error"](message);
+			return toastr["error"](message);
 		},
 		info: function(message){
-			toastr["info"](message);
+			return toastr["info"](message);
 		}
 	};
 });
@@ -369,19 +373,25 @@ myApp.factory('$misc', function() {
 
 //good luck figuring this one out
 myApp.factory('$request', function($http, $uibModal, $alert, $session) {
-	var message = {title: "Auth error", message: "Please re-login before making this request."};
 	function comb(req, resolve, reject){
+		var resolved = false;
+
+		//if the request has not resolved after one second, show a notification
+		setTimeout(function(){
+			if(!resolved) $alert.info('Your request is processing. Please be patient');
+		}, 1000);
+
 		req()
 		.then(function(data){
-			console.log('resolved', data);
+			resolved = true;
 			resolve(data);
 		})
 		.catch(function(e){
+			resolved = true;
 			if(e.status == 401) {
 				console.log('re-login dialog');
-				message.title = e.data;
 				$alert.info("Your session has expired. Please log in again");
-				$session.loginModal(message).result
+				$session.loginModal({title: e.data, message: "Please re-login before making this request."}).result
 				.then(function(res){
 					comb(req, resolve, reject);
 				})
@@ -393,15 +403,15 @@ myApp.factory('$request', function($http, $uibModal, $alert, $session) {
 			reject(e);
 		})
 	}
-	return obj = {
+	return {
 		get: function(path){
 			return new Promise(function(resolve, reject){
-				comb(()=>{return $http.get(path)}, resolve, reject);
+				comb(function(){return $http.get(path)}, resolve, reject);
 			})
 		},
 		post: function(path, data){
 			return new Promise(function(resolve, reject){
-				comb(()=>{return $http.post(path, data)}, resolve, reject);
+				comb(function(){return $http.post(path, data)}, resolve, reject);
 			})
 		}
 	};

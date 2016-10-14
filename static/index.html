@@ -28,9 +28,12 @@
                 </div>
 
                 <ul class="nav navbar-nav navbar-right">
-                    <li><a ng-if="$session.haveAccess('user')" href="#user"><i class="fa fa-home"></i> Form List</a></li>
-                    <li><a ng-if="$session.haveAccess('manager')" href="#"><i class="fa fa-comments"></i> Submissions</a></li>
-                    <li><a ng-if="$session.haveAccess('manager')" href="#manager"><i class="fa fa-file-text-o"></i> Form Management</a></li>
+                    <li ng-if-start="$session.getAccess('manager')"><a href="#user"><i class="fa fa-home"></i> User Home</a></li>
+                    <li ng-if-end><a href="#manager"><i class="fa fa-file-text-o"></i> Management</a></li>
+
+                    <li ng-if="$session.getAccess('user')""><a href="#user"><i class="fa fa-home"></i> Home</a></li>
+
+
                     <li><a ng-if="$session.loggedIn()" ng-click="logOut();"><i class="fa fa-bed"></i> Log out</a></li>
                     <li><a ng-if="!$session.loggedIn()" ng-click="logIn();"><i class="fa fa-sign-in"></i> Log In</a></li>
                 </ul>
