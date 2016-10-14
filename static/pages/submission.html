@@ -46,8 +46,11 @@
 <div class="form-group">
 	<div class="row" style="">
 		<div class="col-sm-7 submissionBox">
-			<div class="panel panel-default" ng-class="{submitted: state == 'submitted' || state == 'new'}">
-				<div class="panel-heading text-center"><h4><strong>New {{ form.name }} Submission</strong></h4></div>
+			<div class="panel panel-default" ng-class="{submitted: submission.state == 'submitted' || submission.state == 'saved', accepted: submission.state == 'accepted', declined: submission.state == 'declined', returned: submission.state == 'returned'}">
+				<div class="panel-heading text-center">
+					<h4 ng-if="state == 'new'"><strong>New {{ form.name }} Submission</strong></h4>
+					<h3>{{submission.state}}</h3>
+				</div>
 				<div class="panel-body">
 
 					<form class="col-md-8 form-horizontal">
@@ -65,56 +68,18 @@
 		<div class="col-sm-5" ng-if="state == 'edit' || state == 'view'">
 			<div class="panel-group commentBox">
   				<div class="panel panel-default">
-    				<div class="panel-body">
-						<div class="panel panel-default submitted">
-							<div class="panel-heading">
-								<strong>myusername</strong> <span class="text-muted">Public 5 days ago</span>
+    				<div class="panel-body" style="padding: 0;">
+    					<div class="coolScroll" style="max-height:500px; overflow-y: scroll; padding: 15px;">
+							<div ng-repeat="notification in notifications" class="panel panel-default" ng-class="{submitted: notification.type == 'submitted' || notification.type == 'saved', accepted: notification.type == 'accepted', declined: notification.type == 'declined', returned: notification.type == 'returned', comment_manager: notification.type == 'comment_manager', comment: notification.type == 'comment', reverted: notification.type == 'submitted'}">
+								<div class="panel-heading">
+									<strong><span account-card account="$misc.fromID(submission.account, accounts)"></span></strong> <span class="text-muted">Public 5 days ago</span>
+								</div>
+								<div class="panel-body">
+									created submission
+								</div>
 							</div>
-							<div class="panel-body">
-								created submission
-							</div>
-						</div>
-						<div class="panel panel-default comment">
-							<div class="panel-heading">
-								<strong>myusername</strong> <span class="text-muted">Public 5 days ago</span>
-							</div>
-							<div class="panel-body">
-								LOOOOL WHAT A SHIT SUBMISSIONcomment
-							</div>
-						</div>
-						<div class="panel panel-default comment_manager">
-							<div class="panel-heading">
-								<strong>myusername</strong> <span class="text-muted">5 days ago</span>
-							</div>
-							<div class="panel-body">
-								LOOOOL WHAT A SHIT SUBMISSION manager
-							</div>
-						</div>
-						<div class="panel panel-default accepted">
-							<div class="panel-heading">
-								<strong>myusername</strong> <span class="text-muted">5 days ago</span>
-							</div>
-							<div class="panel-body">
-								<h3>Accepted</h3>
-							</div>
-						</div>
-						<div class="panel panel-default declined">
-							<div class="panel-heading">
-								<strong>myusername</strong> <span class="text-muted">5 days ago</span>
-							</div>
-							<div class="panel-body">
-								<h3>Declined</h3>
-							</div>
-						</div>
-						<div class="panel panel-default returned">
-							<div class="panel-heading">
-								<strong>myusername</strong> <span class="text-muted">5 days ago</span>
-							</div>
-							<div class="panel-body">
-								<h3>Sent Back</h3>
-							</div>
-						</div>
 
+    					</div>
     				</div>
     				<div class="panel-footer" >
 						<div class="input-group">
@@ -134,9 +99,9 @@
 	<div class="form-group">
 		<div class="row">
 			<div ng-if="state == 'edit' || state == 'view'" class="btn-group" role="group" aria-label="Basic example">
-				<button type="button" class="btn btn-success">Accept</button>
-				<button type="button" class="btn btn btn-danger">Decline</button>
-				<button type="button" class="btn btn-info">Send Back</button>
+				<button ng-click="updateState('accepted');" type="button" class="btn btn-success">Accept</button>
+				<button ng-click="updateState('declined');" type="button" class="btn btn btn-danger">Decline</button>
+				<button ng-click="updateState('returned');" type="button" class="btn btn-info">Send Back</button>
 			</div>
 			<button ng-click="submitForm(true);" ng-if="state == 'edit' || state == 'new'" type="button" class="btn btn-default">Save</button>
 			<button ng-click="submitForm(false);" ng-if="state == 'edit' || state == 'new'" type="button" class="btn btn-primary">Submit</button>

@@ -20,6 +20,7 @@ module.exports = function (webServer, mongoose) {
 	var Account = mongoose.model('Account');
 	var Session = mongoose.model('Session');
 	var Submission = mongoose.model('Submission');
+	var Notification = mongoose.model('Notification');
 
 
 	//turns this: [{_id: "nejktg80f341uono3", name: "ashneil", city: "Sydney"}]
@@ -125,6 +126,19 @@ module.exports = function (webServer, mongoose) {
 			throw e;
 		})
 	});
+	webServer.get('/createInitialAccount2', function(req, res) {
+		password('kmonney69').hash()
+		.then(hash => {
+			return Account.create({email: "manager2@gmail.com", name: "Manager2 Roy", password: hash, cid: "98126016", access: "manager"});
+		})
+		.then(() => {
+			res.send('account created');
+		})
+		.catch(e => {
+			res.status(500).send('error');
+			throw e;
+		})
+	});
 	webServer.get('/createInitialAccountUser', function(req, res) {
 		password('kmonney69').hash()
 		.then(hash => {
@@ -140,7 +154,7 @@ module.exports = function (webServer, mongoose) {
 	});
 
 	webServer.get('/auth/check', validateAccess('user'), function(req, res) {
-		res.send({account: _.pick(req.session.account, ['email', 'name', 'cid', 'access'])});
+		res.send({account: _.pick(req.session.account, ['_id', 'email', 'name', 'cid', 'access'])});
 	});
 
 	webServer.post('/auth/logout', function(req, res) {
@@ -197,7 +211,7 @@ module.exports = function (webServer, mongoose) {
 		.then(newSession => {
 			//set cookie and send account information
 			req.session.sessionID = newSession._id;
-			res.send({account: _.pick(account, ['email', 'name', 'cid', 'access']), session: {expiresIn: newSession.endTime - Date.now()}});
+			res.send({account: _.pick(account, ['_id', 'email', 'name', 'cid', 'access']), session: {expiresIn: newSession.endTime - Date.now()}});
 		})
 		.catch(LoginError, e => {
 			res.status(400).send(e.clientMessage);
@@ -229,7 +243,7 @@ module.exports = function (webServer, mongoose) {
 		});
 	});
 
-	webServer.get('/form/get/:id', validateAccess('user'), function(req, res) {
+	webServer.get('/form/template/get/:id', validateAccess('user'), function(req, res) {
 		var form;
 		//handle param undefined
 		var query = Form.findOne({}, "_id name fields enabled").where('_id').equals(req.params.id)
@@ -257,6 +271,116 @@ module.exports = function (webServer, mongoose) {
 			throw e;
 		})
 	});
+
+	webServer.get('/form/submission/get/:id', validateAccess('user'), function(req, res) {
+		//handle param undefined
+
+		function NotFound(clientMessage) {
+			this.clientMessage = clientMessage;
+		}
+		NotFound.prototype = Object.create(Error.prototype);
+
+
+		var formManager = false;
+		var submission, form, fields, notifications, accounts;
+
+		Submission.findOne().where('_id').equals(req.params.id)
+		.then(a=>{
+			if(a == null) throw new NotFound('Submission not found 1');
+			submission = a;
+
+			return Form.findOne().where('_id').equals(submission.form)
+		})
+		.then(a=>{
+			if(a == null) throw new NotFound('Submission not found 2');
+			form = a;
+
+			//ensure that user either made the submission OR is a manager of the form
+			if(typeof _.find(form.managers, function(manager) { return manager.equals(req.session.account._id); }) !== 'undefined') formManager = true;
+			if(!submission.account.equals(req.session.account._id) && !formManager){
+				throw new NotFound('Submission not found 3')
+			}
+			return Field.find().where('_id').in(form.fields)
+		})
+		.then(a=>{
+			fields = a;
+			//get notifications for submission
+			var type = ['comment', 'accepted', 'declined', 'returned', 'submitted'];
+			//don't send private manager comments if not manager of this form
+			if(formManager) type.push('comment_manager');
+			return Notification.find().where('submission').equals(submission._id).where('type').in(type);
+		})
+		.then(a=>{
+			notifications = a;
+			//get relevant accounts
+			var accountlist = [req.session.account._id];
+			accountlist.concat(form.managers);
+			return Account.find({}, "_id email cid name").where('_id').in(accountlist);
+		})
+		.then(a=>{
+			accounts = a;
+			res.send({form: form, fields: fields, submission: submission, notifications: notifications, accounts: accounts});
+		})
+		.catch(NotFound, e => {
+			res.status(400).send(e.clientMessage);
+		})
+		.catch(e =>{
+			res.status(500).send("Internal error");
+			throw e;
+		})
+	});
+
+	webServer.post('/form/submission/state/update', validateAccess('manager'), function(req, res) {
+		//handle param undefined
+		var validation = inspector.validate({
+			type: 'object',
+			properties: {
+				submissionID: {type: "string"},
+				state: {type: "string"}
+			}
+		}, req.body);
+
+		
+		if(!validation.valid) return res.status(500).send("request validation failed.");
+		if(typeof _.find(['submitted', 'accepted', 'declined', 'returned', 'reverted'], function(state) { return state == req.body.state; }) === 'undefined') return res.status(500).send("request validation failed."); 
+
+		function NotFound(clientMessage) {
+			this.clientMessage = clientMessage;
+		}
+		NotFound.prototype = Object.create(Error.prototype);
+
+		var submission, form;
+		Submission.findOne().where('_id').equals(req.body.submissionID)
+		.then(a=>{
+			if(a == null) throw new NotFound('Submission not found1');
+			submission = a;
+
+			return Form.findOne().where('_id').equals(submission.form).where('managers').equals(req.session.account._id)
+		})
+		.then(a=>{
+			if(a == null) throw new NotFound('Submission not found2');
+			form = a;
+			var tmpState = req.body.state;
+			if(tmpState == 'reverted') tmpState = 'saved';
+			return submission.update({state: tmpState});
+		})
+		.then(()=>{
+			return Notification.create({submission: submission._id, author: req.session.account._id, type: req.body.state});
+		})
+		.then((notification)=>{
+			res.send(notification);
+		})
+		.catch(NotFound, e => {
+			res.status(400).send(e.clientMessage);
+		})
+		.catch(e =>{
+			res.status(500).send("Internal error");
+			throw e;
+		})
+	});
+
+
+
 
 	webServer.post('/form/submission/new', validateAccess('user'), function(req, res) {
 		var validation = inspector.validate({
@@ -336,7 +460,9 @@ module.exports = function (webServer, mongoose) {
 			return Submission.create({account: req.session.account._id, form: req.body.form, values: req.body.values, state: (req.body.saved) ? 'saved' : 'submitted'});
 		})
 		.then((result) => {
-			console.log(result._id);
+			if(!req.body.saved) return Notification.create({submission: result._id, author: req.session.account._id, type: 'submitted'});
+		})
+		.then(()=>{
 			res.send('submitted');
 		})
 		.catch(NotFound, e => {
@@ -351,10 +477,153 @@ module.exports = function (webServer, mongoose) {
 		})
 	});
 
-	webServer.get('/form/manage', function(req, res) {
-		Form.find({}, "_id enabled created name")
+	webServer.get('/manager/homepage', validateAccess('manager'), function(req, res) {
+		var build = {forms: [], accounts: []};
+		var exec = [];
+		exec.push(
+			Form.find({}, "_id name").where('managers').equals(req.session.account._id)
+			.then(a => {
+				build.forms = a;
+			})
+		);
+		exec.push(
+			Account.find({}, "_id name cid email access")
+			.then(a => {
+				build.accounts = a;
+			})
+		);
+		Promise.all(exec)
+		.then(() => {
+			res.send(build);
+		});
+	});
+
+	webServer.get('/manager/form/get/:id', validateAccess('manager'), function(req, res) {
+		var build = {form: {}, submissions: []};
+
+		function NotFound(clientMessage) {
+			this.clientMessage = clientMessage;
+		}
+		NotFound.prototype = Object.create(Error.prototype);
+
+		Form.findOne().where('managers').equals(req.session.account._id).where('_id').equals(req.params.id)
 		.then(a => {
-			res.send(a);
+			if(a === null) throw new NotFound('Form not found');
+			build.form = a;
+		})
+		.then(()=>{
+			return Submission.find({}, "_id created state form account").where('form').equals(build.form._id);
+		})
+		.then(a => {
+			console.log(build.form);
+			build.submissions = a;
+		})
+		.then(() => {
+			res.send(build);
+		})
+		.catch(NotFound, e=>{
+			res.status(400).send(e.clientMessage);
+		});
+	});
+
+
+	webServer.post('/manager/form/manager/remove', validateAccess('manager'), function(req, res) {
+		var validation = {
+			type: 'object',
+			properties: {
+				formID: {
+					type: 'string'
+				},
+				accountID: {
+					type: "string"
+				}
+			}
+		};
+		if(!inspector.validate(validation, req.body)) return response.status(500).send("request validation failed.");
+
+
+		function NotFound(clientMessage) {
+			this.clientMessage = clientMessage;
+		}
+		NotFound.prototype = Object.create(Error.prototype);
+		function BusinessError(clientMessage) {
+			this.clientMessage = clientMessage;
+		}
+		BusinessError.prototype = Object.create(Error.prototype);
+
+		var form;
+		//ensure that the requester is a manager for this form
+		Form.findOne().where('_id').equals(req.body.formID).where('managers').equals(req.session.account._id)
+		.then(a=>{
+			if(a === null) throw new NotFound('Form not found');
+			form = a;
+			//always have at least one manager
+			if(form.managers.length < 2) throw new BusinessError('Can not remove the last manager of a form');
+
+			//do the update
+			return form.update({$pull: {managers: req.body.accountID}});
+		})
+		.then(()=>{
+			res.send('Manager removed');
+		})
+		.catch(NotFound, (e)=>{
+			res.status(400).send(e.clientMessage);
+		})
+		.catch(BusinessError, (e)=>{
+			res.status(400).send(e.clientMessage);
+		})
+	});
+
+
+	webServer.post('/manager/form/manager/add', validateAccess('manager'), function(req, res) {
+		var validation = {
+			type: 'object',
+			properties: {
+				formID: {
+					type: 'string'
+				},
+				accountID: {
+					type: "string"
+				}
+			}
+		};
+		if(!inspector.validate(validation, req.body)) return response.status(500).send("request validation failed.");
+
+
+		function NotFound(clientMessage) {
+			this.clientMessage = clientMessage;
+		}
+		NotFound.prototype = Object.create(Error.prototype);
+		function BusinessError(clientMessage) {
+			this.clientMessage = clientMessage;
+		}
+		BusinessError.prototype = Object.create(Error.prototype);
+		var form;
+		//ensure that the requester is a manager for this form
+		Form.findOne().where('_id').equals(req.body.formID).where('managers').equals(req.session.account._id)
+		.then(a=>{
+			if(a === null) throw new NotFound('Form not found');
+			form = a;
+
+			//ensure that the account is a manager
+			return Account.findOne().where('_id').equals(req.body.accountID);
+		})
+		.then(a=>{
+			if(a === null) throw new NotFound('Account not found');
+
+			if(a.access != 'manager') throw new BusinessError('Account is not a manager');
+
+			//do the update
+			return form.update({$push: {managers: req.body.accountID}});
+		})
+		.then(()=>{
+			res.send('Manager added');
+		})
+		.catch(NotFound, (e)=>{
+			res.status(400).send(e.clientMessage);
+		})
+		.catch(BusinessError, (e)=>{
+			res.status(400).send(e.clientMessage);
 		})
 	});
 
@@ -395,7 +664,7 @@ module.exports = function (webServer, mongoose) {
 		//insert form and fields into database
 		Field.create(req.body.fields)
 		.then(a => {
-			return Form.create({name: req.body.form.name, fields: _.map(a, '_id')});
+			return Form.create({name: req.body.form.name, fields: _.map(a, '_id'), managers: [req.session.account._id]});
 		})
 		.then(() => {
 			response.send("ok");

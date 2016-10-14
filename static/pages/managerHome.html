@@ -1,0 +1,119 @@
+<style>
+	.home-panel .panel-body {
+		padding: 0px;
+	}
+	.panel-heading>h3 {
+		margin-top: 10px;
+	}
+	.home-panel .list-group-item {
+		border-left: 5px solid #999;
+	}
+
+	.panel-dark {
+	    border-color: #d0d0d0;
+	}
+	.panel-dark > .panel-heading {
+	    color: #8a8a8a;
+	    background-color: #ececec;
+	    border-color: #dadada;
+	}
+</style>
+
+<div class="row homeRow">
+	<div class="col-sm-4">
+		<div class="home-panel panel panel-default">
+	  		<div class="panel-heading">
+    			<h3>Notifications</h3>
+			</div>
+			<div class="noteBox red">
+				<span class="onp-sl-long">Incomplete</span>
+			</div>
+			<div class="noteBox blue">
+				<span class="onp-sl-long">Saved Form - Monthly Report...</span>
+			</div>
+	  	</div>
+
+	</div>
+
+	<div class="col-sm-4">
+		<div class="home-panel panel panel-default">
+	  		<div class="panel-heading">
+    			<h3 ng-click="closeForm();">My Forms</h3>
+			</div>
+	  		<div class="panel-body">
+	    		<div class="noteBox gray" ng-class="{red: selectedFormID !== form._id}" ng-repeat="form in forms" ng-click="openForm(form._id);">
+					<span class="onp-sl-long">{{ form.name }}</span>
+				</div>
+			</div>
+	  	</div>
+	</div>
+
+
+	<div class="col-sm-4" ng-if="selectedFormID !== null">
+
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="panel panel-dark">
+					<div class="panel-heading">
+						<h3>Manage</h3>
+					</div>
+					<div class="panel-body">
+						<div class="row">
+							<div class="col-sm-12">
+								<button disabled class="btn btn-danger">Delete</button>
+								<button disabled class="btn btn-warning">Disable</button>
+							</div>
+						</div>
+			  		</div>
+				</div>
+			</div>
+	  	</div>
+
+	  	<div class="row">
+			<div class="col-sm-12">
+				<div class="home-panel panel panel-dark">
+			  		<div class="panel-heading">
+		    			<h3>Pending Submissions</h3>
+					</div>
+			  		<div class="panel-body">
+			  			<div ng-repeat="submission in selectedFormSubmissions" ng-if="submission.state == 'submitted'" go-click="submission/view/{{submission._id}}" class="noteBox red">
+							<span class="onp-sl-long">
+								<span account-card account="$misc.fromID(submission.account, accounts)"></span>: {{ submission.created | date:'d/M/yy h:mm a'}}</span>
+						</div>
+			  		</div>
+			  	</div>
+		  	</div>
+	  	</div>
+
+	  	<div class="row">
+			<div class="col-sm-12">
+				<div class="home-panel panel panel-dark">
+			  		<div class="panel-heading">
+		    			<h3>Resolved Submissions</h3>
+					</div>
+			  		<div class="panel-body">
+			  			<div ng-repeat="submission in selectedFormSubmissions" ng-if="submission.state == 'accepted' || submission.state == 'declined'" go-click="submission/view/{{submission._id}}" class="noteBox red">
+							<span class="onp-sl-long"><span account-card account="$misc.fromID(submission.account, accounts)"></span>: {{ submission.created | date:'d/M/yy h:mm a'}}</span>
+						</div>
+			  		</div>
+			  	</div>
+		  	</div>
+	  	</div>
+
+	  	<div class="row">
+			<div class="col-sm-12">
+				<div class="home-panel panel panel-dark">
+			  		<div class="panel-heading">
+		    			<h3>Managers</h3>
+					</div>
+			  		<div class="panel-body">
+			  			<div ng-repeat="account in accounts" ng-click="toggleManager(account._id);" ng-if="account.access == 'manager'" class="noteBox grey" ng-class="{green: isAccountManager(account._id)}">
+							<span account-card account="account"></span>
+						</div>
+			  		</div>
+			  	</div>
+		  	</div>
+	  	</div>
+
+	</div>
+</div>

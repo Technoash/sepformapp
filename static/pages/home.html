@@ -49,7 +49,7 @@
 						<h3>Incomplete Submissions</h3>
 					</div>
 					<div class="panel-body">
-			  			<div ng-repeat="submission in submissions" ng-if="submission.state == 'returned' || submission.state == 'saved'" class="noteBox red">
+			  			<div ng-repeat="submission in submissions" go-click="submission/fill/{{submission._id}}" ng-if="submission.state == 'returned' || submission.state == 'saved'" class="noteBox red">
 							<span class="onp-sl-long">{{ $misc.fromID(submission.form, forms).name }}: {{ submission.created | date:'d/M/yy h:mm a'}}</span>
 						</div>
 			  		</div>
@@ -64,7 +64,7 @@
 		    			<h3>Pending Submissions</h3>
 					</div>
 			  		<div class="panel-body">
-			  			<div ng-repeat="submission in submissions" ng-if="submission.state == 'submitted'" class="noteBox red">
+			  			<div ng-repeat="submission in submissions" go-click="submission/view/{{submission._id}}" ng-if="submission.state == 'submitted'" class="noteBox red">
 							<span class="onp-sl-long">{{ $misc.fromID(submission.form, forms).name }}: {{ submission.created | date:'d/M/yy h:mm a'}}</span>
 						</div>
 			  		</div>
@@ -79,7 +79,7 @@
 		    			<h3>Resolved Submissions</h3>
 					</div>
 			  		<div class="panel-body">
-			  			<div ng-repeat="submission in submissions" ng-if="submission.state == 'accepted' || submission.state == 'declined'" class="noteBox red">
+			  			<div ng-repeat="submission in submissions" go-click="submission/view/{{submission._id}}" ng-if="submission.state == 'accepted' || submission.state == 'declined'" class="noteBox red">
 							<span class="onp-sl-long">{{ $misc.fromID(submission.form, forms).name }}: {{ submission.created | date:'d/M/yy h:mm a'}}</span>
 						</div>
 			  		</div>

@@ -12,7 +12,8 @@ module.exports = function (mongoose) {
 		name: {type: String, required: true},
 		created: {type: Date, default: Date.now},
 		enabled: {type: Boolean, default: true},
-		fields: [Schema.Types.ObjectId]
+		fields: [Schema.Types.ObjectId],
+		managers: [Schema.Types.ObjectId]
 	})); 
 	 
 	mongoose.model('Account', new Schema({
@@ -48,7 +49,7 @@ module.exports = function (mongoose) {
 		submission: {type: Schema.Types.ObjectId, required: true},
 		created: {type: Date, default: Date.now},
 		author: {type: Schema.Types.ObjectId, required: true},
-		type: {type: String, required: true, enum: ['comment_manager', 'comment', 'accepted', 'declined', 'returned', 'submitted']},
-		comment_content: {type: String}
+		type: {type: String, required: true, enum: ['comment_manager', 'comment', 'accepted', 'declined', 'returned', 'submitted', 'reverted']},
+		comment_content: {type: String, default: ""}
 	}));
 };

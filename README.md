@@ -34,3 +34,5 @@ not enough time to do all of this
 - delete fields
 - delete comments
 - delete accounts
+- dynamic updates without page refresh (socketio)
+- resource locking (two managers can't edit a form at once)

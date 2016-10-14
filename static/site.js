@@ -18,8 +18,8 @@ myApp.config(function($routeProvider) {
 		}
 	})
 	.when('/manager', {
-		templateUrl : 'pages/formManage.html',
-		controller  : 'FormManageController',
+		templateUrl : 'pages/managerHome.html',
+		controller  : 'ManagerHomeController',
 		data: {
 			access: 'manager'
 		}
@@ -42,7 +42,7 @@ myApp.config(function($routeProvider) {
 	})
 	.when('/form/fill/:formID', {
 		templateUrl : 'pages/submission.html',
-		controller  : 'FormFillController',
+		controller  : 'SubmissionController',
 		data: {
 			access: 'user',
 			state: 'new'
@@ -50,7 +50,7 @@ myApp.config(function($routeProvider) {
 	})
 	.when('/submission/fill/:submissionID', {
 		templateUrl : 'pages/submission.html',
-		controller  : 'FormFillController',
+		controller  : 'SubmissionController',
 		data: {
 			access: 'user',
 			state: 'edit'
@@ -58,7 +58,7 @@ myApp.config(function($routeProvider) {
 	})
 	.when('/submission/view/:submissionID', {
 		templateUrl : 'pages/submission.html',
-		controller  : 'FormFillController',
+		controller  : 'SubmissionController',
 		data: {
 			access: 'user',
 			state: 'view'
@@ -135,47 +135,140 @@ myApp.controller('HomeController', function($scope, $request, $misc) {
 });
 
 
-myApp.controller('FormManageController', function($scope, $request) {
-	$scope.formsList = {};
+myApp.controller('ManagerHomeController', function($scope, $request, $misc, $alert, $rootScope) {
+	$scope.$misc = $misc;
+
+	$scope.selectedFormID = null;
+	$scope.selectedForm = null;
+	$scope.selectedFormSubmissions = [];
+
+	$scope.accounts = [];
+	$scope.forms = [];
 
 	$scope.loadFormList = function(){
-		$request.get('/form/manage').then(function(res){
-			$scope.formsList = res.data;
+		$request.get('/manager/homepage').then(function(res){
+			console.log(res);
+			$scope.forms = res.data.forms;
+			$scope.accounts = res.data.accounts;
 			$scope.$apply();
 		});
+	}
+	$scope.openForm = function(id){
+		$request.get('/manager/form/get/'+id).then(function(res){
+			console.log(res);
+			$scope.selectedFormID = id;
+			$scope.selectedForm = res.data.form;
+			$scope.selectedFormSubmissions = res.data.submissions;
+			$scope.$apply();
+		});
+	}
+	$scope.closeForm = function(){
+		$scope.selectedFormID = null;
+		$scope.selectedForm = null;
+		$scope.selectedFormSubmissions = [];
+		$scope.selectedFormAccounts = [];
+	}
+
+	$scope.isAccountManager = function(id){
+		return typeof _.find($scope.selectedForm.managers, function(o){
+			return o == id;
+		}) !== 'undefined';
+	}
+
+	$scope.toggleManager = function(id){
+		console.log(_);
+		if($scope.isAccountManager(id)){
+			//remove
+			if($scope.selectedForm.managers.length == 1) return $alert.info('You can not remove the last manager of this form');
+
+			$request.post('/manager/form/manager/remove', {formID: $scope.selectedFormID, accountID: id})
+			.then(function(res){
+				_.remove($scope.selectedForm.managers, function(managerID) {
+					return managerID == id;
+				});
+
+				if(id == $rootScope.auth.account._id){
+					_.remove($scope.forms, function(form) {
+						return form._id == $scope.selectedFormID;
+					});
+					$scope.closeForm();
+					$alert.success("You removed yourself as a manager");
+				}
+				else $alert.success("Manager removed from form");
+				$scope.$apply();
+			});
+		}
+		else{
+			//add
+			$request.post('/manager/form/manager/add', {formID: $scope.selectedFormID, accountID: id})
+			.then(function(res){
+				$scope.selectedForm.managers.push(id);
+				$scope.$apply();
+				$alert.success("Manager added to form");
+			});
+		}
 	}
 
 	$scope.loadFormList();
 });
 
-myApp.controller('FormFillController', function($scope, $request, $routeParams, $location, $session, $route) {
+
+myApp.controller('SubmissionController', function($scope, $request, $routeParams, $location, $session, $route, $rootScope) {
+	//new, edit, view
 	$scope.state = $route.current.$$route.data.state;
-	$scope.form = {_id: $routeParams.formID};
-	$scope.fields = {};
-	$scope.values = [];
+	$scope.form = {};
+	$scope.fields = [];
+	$scope.submission = {values: []};
+	$scope.notifications = [];
+	$scope.accounts = [];
 
 	$scope.loadForm = function(){
-		$request.get('/form/get/'+$scope.form._id)
-		.then(function(res){
-			$scope.form = res.data.form;
-			$scope.fields = res.data.fields;
-			for(var i = 0; i < $scope.fields.length; i++) $scope.values.push({value: "", fieldID: $scope.fields[i]._id});
-			$scope.$apply();
-		});
+		if($scope.state == 'new') {
+			$request.get('/form/template/get/'+$routeParams.formID)
+			.then(function(res){
+				$scope.form = res.data.form;
+				$scope.fields = res.data.fields;
+				for(var i = 0; i < $scope.fields.length; i++) $scope.submission.values.push({value: "", fieldID: $scope.fields[i]._id});
+				$scope.$apply();
+			});
+		}
+		if($scope.state == 'edit' || $scope.state == 'view') {
+			$request.get('/form/submission/get/'+$routeParams.submissionID)
+			.then(function(res){
+				/// submission, form, fields, notifications, accounts
+				$scope.form = res.data.form;
+				$scope.fields = res.data.fields;
+				$scope.submission = res.data.submission;
+				$scope.notifications = res.data.notifications;
+				$scope.accounts = res.data.accounts;
+				for(var i = 0; i < $scope.fields.length; i++) $scope.submission.values.push({value: "", fieldID: $scope.fields[i]._id});
+				$scope.$apply();
+			});
+		}
 	}
 
 	$scope.valueByID = function(id){
-		for(var i = 0; i < $scope.values.length; i++){
-			if($scope.values[i].fieldID == id){
-				return $scope.values[i];
+		for(var i = 0; i < $scope.submission.values.length; i++){
+			if($scope.submission.values[i].fieldID == id){
+				return $scope.submission.values[i];
 			}
 		}
 	}
 
 	$scope.submitForm = function(saved){
-		$request.post('/form/submission/new', {form: $scope.form._id, values: $scope.values, saved: saved})
+		$request.post('/form/submission/new', {form: $scope.form._id, values: $scope.submission.values, saved: saved})
 		.then(function(res){
 			$location.path("/user");
+			$scope.$apply();
+		});
+	}
+
+	$scope.updateState = function(newState){
+		$request.post('/form/submission/state/update', {submissionID: $routeParams.submissionID, state: newState})
+		.then(function(res){
+			$scope.submission.state = newState;
+			$scope.notifications.push(res.data);
+			console.log($scope.notifications);
 			$scope.$apply();
 		});
 	}
@@ -429,5 +522,15 @@ myApp.factory('$request', function($http, $uibModal, $alert, $session) {
 				comb(function(){return $http.post(path, data)}, resolve, reject);
 			})
 		}
+	};
+});
+
+myApp.directive('accountCard', function() {
+	return {
+		restrict: 'A',
+		templateUrl: 'pages/directiveAccountCard.html',
+		scope: {
+			account: '=',
+		},
 	};
 });
