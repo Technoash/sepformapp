@@ -424,7 +424,7 @@ module.exports = function (webServer, mongoose) {
 		}
 		ValidationError.prototype = Object.create(Error.prototype);
 
-		var form;
+		var form, submissionID;
 		Form.findOne( { _id: req.body.form})
 		.then(result => {
 			if(result == null) throw new NotFound('Form not found');
@@ -476,14 +476,15 @@ module.exports = function (webServer, mongoose) {
 			update({values: req.body.values, created: Date.now(), state: (req.body.saved) ? 'saved' : 'submitted'})
 		})
 		.then((result) => {
-			var submissionID = result._id;
+			submissionID = result._id;
 			if(typeof req.body.submissionID !== 'undefined'){
 				submissionID = req.body.submissionID;
 			}
 			if(!req.body.saved) return Notification.create({submission: submissionID, author: req.session.account._id, type: 'submitted'});
 		})
-		.then(()=>{
-			res.send('submitted');
+		.then(a=>{
+			//return submission id for page redirect
+			res.send(submissionID);
 		})
 		.catch(NotFound, e => {
 			res.status(400).send(e.clientMessage);

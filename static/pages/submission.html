@@ -124,8 +124,8 @@
 	<div class="form-group">
 		<div class="row">
 			<div ng-if="whoAmI() == 'manager' && submission.state != 'saved' && submission.state != 'returned'" class="btn-group" role="group" aria-label="Basic example">
-				<button ng-click="updateState('accepted');" type="button" class="btn btn-success">Accept</button>
-				<button ng-click="updateState('declined');" type="button" class="btn btn btn-danger">Decline</button>
+				<button ng-click="updateState('accepted');" ng-disabled="submission.state == 'accepted'" type="button" class="btn btn-success">Accept</button>
+				<button ng-click="updateState('declined');" ng-disabled="submission.state == 'declined'" type="button" class="btn btn btn-danger">Decline</button>
 				<button ng-click="updateState('returned');" type="button" class="btn btn-info">Send Back</button>
 			</div>
 			<button ng-if="isEditable() && submission.state != 'returned'" ng-click="submitForm(true);" type="button" class="btn btn-default">Save</button>

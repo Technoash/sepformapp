@@ -28,7 +28,7 @@ myApp.config(function($routeProvider) {
 		templateUrl : 'pages/formEdit.html',
 		controller  : 'FormEditController',
 		data: {
-			access: 'user',
+			access: 'manager',
 			new: false
 		}
 	})
@@ -63,9 +63,6 @@ myApp.config(function($routeProvider) {
 			access: 'user',
 			state: 'view'
 		}
-	})
-	.when('/somerandompage', {
-		templateUrl : 'pages/viewSubmissionEdit.html'
 	})
 	.otherwise({
 		templateUrl : 'pages/notFound.html'
@@ -279,19 +276,21 @@ myApp.controller('SubmissionController', function($scope, $request, $routeParams
 			if(field.type == "date" && field.required && $scope.valueByID(field._id).value == "") $scope.valueErrors[field._id] = field.name + " is required and cannot be empty";
 		}
 
-		if(_.size($scope.valueErrors) > 0) return $alert.warning('Some fields in your submission are not valid');
+		if(!saved && _.size($scope.valueErrors) > 0) return $alert.warning('Some fields in your submission are not valid');
 
 		var tosend = {form: $scope.form._id, values: $scope.submission.values, saved: saved};
 
 		if($scope.state == 'incomplete' || $scope.state == 'view') tosend['submissionID'] = $routeParams.submissionID;
 		$request.post('/form/submission/new', tosend)
 		.then(function(res){
-			$location.path("/user");
+			if(saved) $location.path("/user");
+			if(!saved){
+				$location.path("/submission/view/" + res.data);
+				if($scope.submission._id == res.data) $route.reload();
+			}
+			$alert.success('Submission ' + ((saved) ? 'saved':'created'));
 			$scope.$apply();
 		})
-		.catch(function(e){
-			console.log('error', e);
-		});
 	}
 
 	$scope.commentScrollBottom = function(){

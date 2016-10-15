@@ -7,6 +7,7 @@
 - ~~view submission~~
 - ~~submission comment sidebar~~
 - notifications
+- homepage list colours
 - ~~homepage lists~~
 - ~~other field types~~
 

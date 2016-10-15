@@ -38,7 +38,14 @@
 	<div class="col-sm-4">
 		<div class="home-panel panel panel-default">
 	  		<div class="panel-heading">
-    			<h3 ng-click="closeForm();">My Forms</h3>
+    			<div class="row">
+    				<div class="col-sm-8">
+    					<h3 style="margin-top: 10px" ng-click="closeForm();">My Forms</h3>
+    				</div>
+    				<div class="col-sm-4">
+    					<button go-click="form/new" class="btn btn-default" style="width: 100%;">New</button>
+    				</div>
+    			</div>
 			</div>
 	  		<div class="panel-body">
 	    		<div class="noteBox gray" ng-class="{red: selectedFormID !== form._id}" ng-repeat="form in forms" ng-click="openForm(form._id);">
