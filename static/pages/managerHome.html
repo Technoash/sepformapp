@@ -76,7 +76,7 @@
 		    			<h3>Pending Submissions</h3>
 					</div>
 			  		<div class="panel-body">
-			  			<div ng-repeat="submission in selectedFormSubmissions" ng-if="submission.state == 'submitted'" go-click="submission/view/{{submission._id}}" class="noteBox red">
+			  			<div ng-repeat="submission in selectedFormSubmissions" ng-if="submission.state == 'submitted' || submission.state == 'returned'" go-click="submission/view/{{submission._id}}" class="noteBox red">
 							<span class="onp-sl-long">
 								<span account-card account="$misc.fromID(submission.account, accounts)"></span>: {{ submission.created | date:'d/M/yy h:mm a'}}</span>
 						</div>

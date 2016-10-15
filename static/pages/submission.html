@@ -1,4 +1,5 @@
 <style>
+	/*notification states*/
 	.commentBox .submitted .panel-heading {
 		background-color: #fbfbfb;
 	}
@@ -17,10 +18,16 @@
 	.commentBox .returned .panel-heading {
 		background-color: #d3eff7;
 	}
+	.commentBox .reverted .panel-heading {
+		background-color: #d3eff7;
+	}
+
 	.commentBox h3 {
 		text-align: center;
 		margin-top: 10px;
 	}
+
+	/*submission states*/
 	.submissionBox .submitted .panel-heading {
 		background-color: #fbfbfb;
 	}
@@ -36,6 +43,9 @@
 		background-color: #d3eff7;
 		color: #31708f;
 	}
+	.submissionBox .saved .panel-heading {
+		background-color: #fbfbfb;
+	}
 
 </style>
 
@@ -46,14 +56,14 @@
 <div class="form-group">
 	<div class="row" style="">
 		<div class="col-sm-7 submissionBox">
-			<div class="panel panel-default" ng-class="{submitted: submission.state == 'submitted' || submission.state == 'saved', accepted: submission.state == 'accepted', declined: submission.state == 'declined', returned: submission.state == 'returned'}">
+			<div class="panel panel-default" ng-class="submission.state">
 				<div class="panel-heading text-center">
 					<h4 ng-if="state == 'new'"><strong>New {{ form.name }} Submission</strong></h4>
-					<h3>{{submission.state}}</h3>
+					<h3>{{submission.state | firstLetterUpperCase}}</h3>
 				</div>
 				<div class="panel-body">
 
-					<form class="col-md-8 form-horizontal">
+					<form ng-if="isEditable()" class="col-md-8 form-horizontal">
 						<div ng-repeat="field in fields" class="form-group">
 							<label class="col-sm-2 control-label">{{ field.name }}</label>
 							<div class="col-sm-10">
@@ -62,31 +72,37 @@
 						</div>
 					</form>
 
+					<div ng-if="!isEditable()" ng-repeat="field in fields" class="row">
+						<label class="col-sm-2 control-label">{{ field.name }}</label>
+						<span class="col-sm-10">{{ valueByID(field._id).value }}</span>
+					</div>
+
 				</div>
 			</div>
 		</div>
-		<div class="col-sm-5" ng-if="state == 'edit' || state == 'view'">
+		<div class="col-sm-5" ng-if="state == 'view' || (state == 'incomplete' && submission.state == 'returned')">
 			<div class="panel-group commentBox">
   				<div class="panel panel-default">
     				<div class="panel-body" style="padding: 0;">
-    					<div class="coolScroll" style="max-height:500px; overflow-y: scroll; padding: 15px;">
-							<div ng-repeat="notification in notifications" class="panel panel-default" ng-class="{submitted: notification.type == 'submitted' || notification.type == 'saved', accepted: notification.type == 'accepted', declined: notification.type == 'declined', returned: notification.type == 'returned', comment_manager: notification.type == 'comment_manager', comment: notification.type == 'comment', reverted: notification.type == 'submitted'}">
+    					<div class="coolScroll" id="commentBoxScrollContainer" style="max-height:500px; min-height:300px; overflow-y: scroll; padding: 15px;">
+							<div ng-repeat="notification in notifications" class="panel panel-default" ng-class="notification.type">
 								<div class="panel-heading">
-									<strong><span account-card account="$misc.fromID(submission.account, accounts)"></span></strong> <span class="text-muted">Public 5 days ago</span>
+									<strong><span account-card account="$misc.fromID(notification.author, accounts)"></span></strong> <span class="text-muted">Public {{ notification.created | date:'d/M/yy h:mm a'}}</span>
 								</div>
 								<div class="panel-body">
-									created submission
+									<h3 ng-if="notification.type != 'comment' && notification.type != 'comment_manager'">{{ notification.type | firstLetterUpperCase }}</h3>
+									<span ng-if="notification.type == 'comment' || notification.type == 'comment_manager'">{{ notification.comment_content }}</span>
 								</div>
 							</div>
 
     					</div>
     				</div>
-    				<div class="panel-footer" >
+    				<div ng-if="whoAmI() == 'manager'" class="panel-footer" >
 						<div class="input-group">
-							<input type="text" class="form-control" placeholder="Comment..">
+							<input type="text" ng-model="commentContent" class="form-control" placeholder="Comment..">
 							<div class="input-group-btn">
-								<button type="button" class="btn btn-primary">Manager</button>
-								<button type="button" class="btn btn-default">Public</button>
+								<button ng-click="updateState('comment_manager');" type="button" class="btn btn-primary">Manager</button>
+								<button ng-click="updateState('comment');" type="button" class="btn btn-default">Public</button>
 							</div>
 						</div>
 					</div>
@@ -98,13 +114,13 @@
 <div class="modal-footer">
 	<div class="form-group">
 		<div class="row">
-			<div ng-if="state == 'edit' || state == 'view'" class="btn-group" role="group" aria-label="Basic example">
+			<div ng-if="whoAmI() == 'manager' && submission.state != 'saved' && submission.state != 'returned'" class="btn-group" role="group" aria-label="Basic example">
 				<button ng-click="updateState('accepted');" type="button" class="btn btn-success">Accept</button>
 				<button ng-click="updateState('declined');" type="button" class="btn btn btn-danger">Decline</button>
 				<button ng-click="updateState('returned');" type="button" class="btn btn-info">Send Back</button>
 			</div>
-			<button ng-click="submitForm(true);" ng-if="state == 'edit' || state == 'new'" type="button" class="btn btn-default">Save</button>
-			<button ng-click="submitForm(false);" ng-if="state == 'edit' || state == 'new'" type="button" class="btn btn-primary">Submit</button>
+			<button ng-if="isEditable() && submission.state != 'returned'" ng-click="submitForm(true);" type="button" class="btn btn-default">Save</button>
+			<button ng-click="submitForm(false);" ng-if="isEditable()" type="button" class="btn btn-primary">Submit</button>
 		</div>
 	</div>
 </div>

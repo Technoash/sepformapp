@@ -313,8 +313,8 @@ module.exports = function (webServer, mongoose) {
 		.then(a=>{
 			notifications = a;
 			//get relevant accounts
-			var accountlist = [req.session.account._id];
-			accountlist.concat(form.managers);
+			var accountlist = [submission.account];
+			accountlist = accountlist.concat(form.managers);
 			return Account.find({}, "_id email cid name").where('_id').in(accountlist);
 		})
 		.then(a=>{
@@ -336,13 +336,13 @@ module.exports = function (webServer, mongoose) {
 			type: 'object',
 			properties: {
 				submissionID: {type: "string"},
-				state: {type: "string"}
+				state: {type: "string"},
+				content: {type: "string", optional: true}
 			}
 		}, req.body);
 
-		
 		if(!validation.valid) return res.status(500).send("request validation failed.");
-		if(typeof _.find(['submitted', 'accepted', 'declined', 'returned', 'reverted'], function(state) { return state == req.body.state; }) === 'undefined') return res.status(500).send("request validation failed."); 
+		if(typeof _.find(['comment', 'comment_manager', 'submitted', 'accepted', 'declined', 'returned', 'reverted'], function(state) { return state == req.body.state; }) === 'undefined') return res.status(500).send("request validation failed."); 
 
 		function NotFound(clientMessage) {
 			this.clientMessage = clientMessage;
@@ -362,10 +362,13 @@ module.exports = function (webServer, mongoose) {
 			form = a;
 			var tmpState = req.body.state;
 			if(tmpState == 'reverted') tmpState = 'saved';
-			return submission.update({state: tmpState});
+			if(tmpState != 'comment' && tmpState != 'comment_manager') return submission.update({state: tmpState});
 		})
 		.then(()=>{
-			return Notification.create({submission: submission._id, author: req.session.account._id, type: req.body.state});
+			console.log(req.body);
+			var notificationData = {submission: submission._id, author: req.session.account._id, type: req.body.state};
+			if(req.body.state == 'comment' || req.body.state == 'comment_manager') notificationData['comment_content'] = req.body.content;
+			return Notification.create(notificationData);
 		})
 		.then((notification)=>{
 			res.send(notification);
@@ -401,10 +404,13 @@ module.exports = function (webServer, mongoose) {
 				},
 				saved: {
 					type: 'boolean'
+				},
+				submissionID: {
+					type: 'string',
+					optional: true
 				}
 			}
 		}, req.body);
-		console.log('req body', req.body)
 		if(!validation.valid) return res.status(500).send("request validation failed.");
 		///return res.send('good');
 
@@ -428,7 +434,6 @@ module.exports = function (webServer, mongoose) {
 
 		})
 		.then(fields => {
-			console.log('fields', fields)
 
 			if(!req.body.saved){
 				//ensure all required fields exist
@@ -457,10 +462,19 @@ module.exports = function (webServer, mongoose) {
 				if(!found) throw new ValidationError("One or more fields not found");
 			}
 
-			return Submission.create({account: req.session.account._id, form: req.body.form, values: req.body.values, state: (req.body.saved) ? 'saved' : 'submitted'});
+			
+			if(typeof req.body.submissionID === 'undefined') 
+				return Submission.create({account: req.session.account._id, form: req.body.form, values: req.body.values, state: (req.body.saved) ? 'saved' : 'submitted'});
+
+			return Submission.find().where('account').equals(req.session.account._id).where('_id').equals(req.body.submissionID).
+			update({values: req.body.values, created: Date.now(), state: (req.body.saved) ? 'saved' : 'submitted'})
 		})
 		.then((result) => {
-			if(!req.body.saved) return Notification.create({submission: result._id, author: req.session.account._id, type: 'submitted'});
+			var submissionID = result._id;
+			if(typeof req.body.submissionID !== 'undefined'){
+				submissionID = req.body.submissionID;
+			}
+			if(!req.body.saved) return Notification.create({submission: submissionID, author: req.session.account._id, type: 'submitted'});
 		})
 		.then(()=>{
 			res.send('submitted');
@@ -515,7 +529,6 @@ module.exports = function (webServer, mongoose) {
 			return Submission.find({}, "_id created state form account").where('form').equals(build.form._id);
 		})
 		.then(a => {
-			console.log(build.form);
 			build.submissions = a;
 		})
 		.then(() => {
@@ -675,3 +688,4 @@ module.exports = function (webServer, mongoose) {
 		})
 	});
 };
+

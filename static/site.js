@@ -53,7 +53,7 @@ myApp.config(function($routeProvider) {
 		controller  : 'SubmissionController',
 		data: {
 			access: 'user',
-			state: 'edit'
+			state: 'incomplete'
 		}
 	})
 	.when('/submission/view/:submissionID', {
@@ -213,14 +213,17 @@ myApp.controller('ManagerHomeController', function($scope, $request, $misc, $ale
 });
 
 
-myApp.controller('SubmissionController', function($scope, $request, $routeParams, $location, $session, $route, $rootScope) {
-	//new, edit, view
+myApp.controller('SubmissionController', function($scope, $request, $routeParams, $location, $route, $alert, $misc, $rootScope) {
+	//new, incomplete, view
+	$scope.$rootScope = $rootScope;
+	$scope.$misc = $misc;
 	$scope.state = $route.current.$$route.data.state;
 	$scope.form = {};
 	$scope.fields = [];
 	$scope.submission = {values: []};
 	$scope.notifications = [];
 	$scope.accounts = [];
+	$scope.commentContent = "ayyyy";
 
 	$scope.loadForm = function(){
 		if($scope.state == 'new') {
@@ -232,19 +235,36 @@ myApp.controller('SubmissionController', function($scope, $request, $routeParams
 				$scope.$apply();
 			});
 		}
-		if($scope.state == 'edit' || $scope.state == 'view') {
+		if($scope.state == 'incomplete' || $scope.state == 'view') {
 			$request.get('/form/submission/get/'+$routeParams.submissionID)
 			.then(function(res){
 				/// submission, form, fields, notifications, accounts
 				$scope.form = res.data.form;
+				console.log('form', $scope.form);
 				$scope.fields = res.data.fields;
+				console.log('fields', $scope.fields);
 				$scope.submission = res.data.submission;
+				console.log('submission', $scope.submission);
 				$scope.notifications = res.data.notifications;
+				console.log('notifications', $scope.notifications);
 				$scope.accounts = res.data.accounts;
-				for(var i = 0; i < $scope.fields.length; i++) $scope.submission.values.push({value: "", fieldID: $scope.fields[i]._id});
+				console.log('accounts', $scope.accounts);
 				$scope.$apply();
+				$scope.commentScrollBottom();
 			});
 		}
+	}
+
+	$scope.whoAmI = function(){
+		if(typeof _.find($scope.form.managers, function(o){
+			return o == $rootScope.auth.account._id;
+		}) !== 'undefined')
+			return 'manager';
+		return 'user';
+	}
+
+	$scope.isEditable = function(){
+		return $scope.state == 'new' || $rootScope.auth.account._id == $scope.submission.account && ($scope.submission.state == 'saved' || $scope.submission.state == 'returned')
 	}
 
 	$scope.valueByID = function(id){
@@ -256,20 +276,38 @@ myApp.controller('SubmissionController', function($scope, $request, $routeParams
 	}
 
 	$scope.submitForm = function(saved){
-		$request.post('/form/submission/new', {form: $scope.form._id, values: $scope.submission.values, saved: saved})
+		var tosend = {form: $scope.form._id, values: $scope.submission.values, saved: saved};
+		if($scope.state == 'incomplete' || $scope.state == 'view') tosend['submissionID'] = $routeParams.submissionID;
+		$request.post('/form/submission/new', tosend)
 		.then(function(res){
 			$location.path("/user");
 			$scope.$apply();
 		});
 	}
 
+	$scope.commentScrollBottom = function(){
+		var elem = document.getElementById('commentBoxScrollContainer');
+  		elem.scrollTop = elem.scrollHeight;
+	}
+
 	$scope.updateState = function(newState){
-		$request.post('/form/submission/state/update', {submissionID: $routeParams.submissionID, state: newState})
+		var reqData = {submissionID: $routeParams.submissionID, state: newState};
+		if(newState == 'comment' || newState == 'comment_manager'){
+			reqData['content'] = $scope.commentContent;
+		}
+		$request.post('/form/submission/state/update', reqData)
 		.then(function(res){
-			$scope.submission.state = newState;
+			if(newState != 'comment' && newState != 'comment_manager'){
+				$scope.submission.state = newState;
+				$alert.success("State of form changed");
+			}
+			else{
+				//comment
+				$alert.success("Comment added");
+			}
 			$scope.notifications.push(res.data);
-			console.log($scope.notifications);
 			$scope.$apply();
+			$scope.commentScrollBottom();
 		});
 	}
 	//handle err
@@ -533,4 +571,10 @@ myApp.directive('accountCard', function() {
 			account: '=',
 		},
 	};
+});
+
+myApp.filter('firstLetterUpperCase', function() {
+    return function(input) {
+      return (!!input) ? input.charAt(0).toUpperCase() + input.substr(1).toLowerCase() : '';
+    }
 });
