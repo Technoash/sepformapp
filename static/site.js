@@ -79,9 +79,9 @@ myApp.controller('FormEditController', function($scope, $request, $location, $ro
 	$scope.fields = [];
 
 	$scope.fieldTypes = {
-		text: "Text"
+		text: "Text",
 		//number: "Number",
-		//date: "Date",
+		date: "Date"
 		//time: "Time"
 	}
 
@@ -224,6 +224,7 @@ myApp.controller('SubmissionController', function($scope, $request, $routeParams
 	$scope.notifications = [];
 	$scope.accounts = [];
 	$scope.comment = {content: ""};
+	$scope.valueErrors = {};
 
 	$scope.loadForm = function(){
 		if($scope.state == 'new') {
@@ -271,12 +272,25 @@ myApp.controller('SubmissionController', function($scope, $request, $routeParams
 	}
 
 	$scope.submitForm = function(saved){
+		$scope.valueErrors = {};
+		for(var i = 0; i < $scope.fields.length; i++){
+			var field = $scope.fields[i];
+			if(field.type == "text" && field.required && $scope.valueByID(field._id).value == "") $scope.valueErrors[field._id] = field.name + " is required and cannot be empty";
+			if(field.type == "date" && field.required && $scope.valueByID(field._id).value == "") $scope.valueErrors[field._id] = field.name + " is required and cannot be empty";
+		}
+
+		if(_.size($scope.valueErrors) > 0) return $alert.warning('Some fields in your submission are not valid');
+
 		var tosend = {form: $scope.form._id, values: $scope.submission.values, saved: saved};
+
 		if($scope.state == 'incomplete' || $scope.state == 'view') tosend['submissionID'] = $routeParams.submissionID;
 		$request.post('/form/submission/new', tosend)
 		.then(function(res){
 			$location.path("/user");
 			$scope.$apply();
+		})
+		.catch(function(e){
+			console.log('error', e);
 		});
 	}
 

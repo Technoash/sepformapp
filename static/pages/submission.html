@@ -63,18 +63,27 @@
 				</div>
 				<div class="panel-body">
 					<h3 style="margin-top: 10px; margin-bottom: 20px;">{{ form.name }}</h3>
-					<form ng-if="isEditable()" class="col-md-8 form-horizontal">
+					<form ng-if="isEditable()" class="col-sm-9 form-horizontal">
 						<div ng-repeat="field in fields" class="form-group">
-							<label class="col-sm-2 control-label">{{ field.name }}</label>
-							<div class="col-sm-10">
+							<label class="col-sm-3 control-label">{{ field.name }}</label>
+							<div class="col-sm-9">
 								<input ng-if="field.type == 'text'" ng-model="valueByID(field._id).value" type="text" class="form-control" placeholder="{{ field.helper }}">
+
+
+								<label ng-if="field.type == 'date'" style="font-weight: normal; margin-top:6px;">{{ field.helper }}</label>
+								<label ng-if="field.type == 'date'">{{ valueByID(field._id).value | date : 'd/M/yy' }}</label>
+								<div ng-if="field.type == 'date'" style="margin-bottom: 5px;" uib-datepicker ng-model="valueByID(field._id).value" class="well well-sm"></div>
+								<button ng-if="field.type == 'date' && !field.required" class="btn btn-default btn-xs" ng-click="valueByID(field._id).value = null;">Clear</button>
+
+								<label style="color: #a94442" ng-if="valueErrors[field._id]" class="control-label">{{valueErrors[field._id]}}</label>
 							</div>
 						</div>
 					</form>
 
 					<div ng-if="!isEditable()" ng-repeat="field in fields" class="row">
 						<label class="col-sm-2 control-label">{{ field.name }}</label>
-						<span class="col-sm-10">{{ valueByID(field._id).value }}</span>
+						<span ng-if="field.type == 'text'" class="col-sm-10">{{ valueByID(field._id).value }}</span>
+						<span ng-if="field.type == 'date'" class="col-sm-10">{{ valueByID(field._id).value | date : 'd/M/yy' }}</span>
 					</div>
 
 				</div>

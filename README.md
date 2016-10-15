@@ -8,17 +8,10 @@
 - ~~submission comment sidebar~~
 - notifications
 - ~~homepage lists~~
-- account settings
-- create account, send email
-- edit form
-- preview new form
-- other field types
+- ~~other field types~~
 
 
 ### tidy up
-- check request auth
-- go over error catches
-- consolidate fields
 - ~~loading animations~~ ("please be patient" notification)
 - consolidate error objects
 - split up into modules and files
@@ -36,3 +29,13 @@ not enough time to do all of this
 - delete accounts
 - dynamic updates without page refresh (socketio)
 - resource locking (two managers can't edit a form at once)
+- preview new form
+- edit form
+- create account, send email
+- account settings
+
+
+### tidy up later
+- check request auth
+- consolidate fields
+- go over error catches

@@ -2,7 +2,7 @@ module.exports = function (mongoose) {
 	Schema = mongoose.Schema;
 
 	mongoose.model('Field', new Schema({
-		type: {type: String, enum: ['number', 'text']},
+		type: {type: String, enum: ['date', 'text']},
 		name: String,
 		helper: String,
 		required: Boolean

@@ -441,9 +441,15 @@ module.exports = function (webServer, mongoose) {
 					var found = false;
 					for(var a = 0; a < req.body.values.length; a++){
 						///need to check for validity of each type here; right now just checking if string is empty
-						if(fields[i]._id == req.body.values[a].fieldID && (!fields[i].required || req.body.values[a].value != "")){
-							found = true;
-							break;
+						if(fields[i]._id == req.body.values[a].fieldID ){
+							if(fields[i].type == "text" && (!fields[i].required || req.body.values[a].value != "")){
+								found = true;
+								break;
+							}
+							if(fields[i].type == "date" && (!fields[i].required || req.body.values[a].value != "")){
+								found = true;
+								break;
+							}
 						};
 					}
 					if(!found) throw new ValidationError("One or more required fields not provided");
@@ -641,7 +647,7 @@ module.exports = function (webServer, mongoose) {
 	});
 
 
-	webServer.post('/form/new', function(req, response) {
+	webServer.post('/form/new', validateAccess('manager'), function(req, response) {
 		var validation = {
 			type: 'object',
 			properties: {
@@ -669,7 +675,7 @@ module.exports = function (webServer, mongoose) {
 
 		//validate field types
 		for(var i=0; i < req.body.fields.length; i++){
-			if(req.body.fields[i].type != "text") return response.status(500).send("request validation failed.");
+			if(!(req.body.fields[i].type == "text" || req.body.fields[i].type == "date")) return response.status(500).send("request validation failed.");
 		}
 
 		//maybe check if form name in use already?
