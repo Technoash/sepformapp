@@ -3,11 +3,11 @@
 ## Todo
 ### big stuff
 - ~~submit submission~~
-- save and edit submission
-- view submission
-- submission comment sidebar
+- ~~save and edit submission~~
+- ~~view submission~~
+- ~~submission comment sidebar~~
 - notifications
-- homepage lists
+- ~~homepage lists~~
 - account settings
 - create account, send email
 - edit form
