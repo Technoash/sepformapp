@@ -223,7 +223,7 @@ myApp.controller('SubmissionController', function($scope, $request, $routeParams
 	$scope.submission = {values: []};
 	$scope.notifications = [];
 	$scope.accounts = [];
-	$scope.commentContent = "ayyyy";
+	$scope.comment = {content: ""};
 
 	$scope.loadForm = function(){
 		if($scope.state == 'new') {
@@ -240,15 +240,10 @@ myApp.controller('SubmissionController', function($scope, $request, $routeParams
 			.then(function(res){
 				/// submission, form, fields, notifications, accounts
 				$scope.form = res.data.form;
-				console.log('form', $scope.form);
 				$scope.fields = res.data.fields;
-				console.log('fields', $scope.fields);
 				$scope.submission = res.data.submission;
-				console.log('submission', $scope.submission);
 				$scope.notifications = res.data.notifications;
-				console.log('notifications', $scope.notifications);
 				$scope.accounts = res.data.accounts;
-				console.log('accounts', $scope.accounts);
 				$scope.$apply();
 				$scope.commentScrollBottom();
 			});
@@ -293,7 +288,8 @@ myApp.controller('SubmissionController', function($scope, $request, $routeParams
 	$scope.updateState = function(newState){
 		var reqData = {submissionID: $routeParams.submissionID, state: newState};
 		if(newState == 'comment' || newState == 'comment_manager'){
-			reqData['content'] = $scope.commentContent;
+			reqData['content'] = $scope.comment.content;
+			console.log('comment', $scope.comment.content);
 		}
 		$request.post('/form/submission/state/update', reqData)
 		.then(function(res){

@@ -62,7 +62,7 @@
 					<h3>{{submission.state | firstLetterUpperCase}}</h3>
 				</div>
 				<div class="panel-body">
-
+					<h3 style="margin-top: 10px; margin-bottom: 20px;">{{ form.name }}</h3>
 					<form ng-if="isEditable()" class="col-md-8 form-horizontal">
 						<div ng-repeat="field in fields" class="form-group">
 							<label class="col-sm-2 control-label">{{ field.name }}</label>
@@ -87,7 +87,7 @@
     					<div class="coolScroll" id="commentBoxScrollContainer" style="max-height:500px; min-height:300px; overflow-y: scroll; padding: 15px;">
 							<div ng-repeat="notification in notifications" class="panel panel-default" ng-class="notification.type">
 								<div class="panel-heading">
-									<strong><span account-card account="$misc.fromID(notification.author, accounts)"></span></strong> <span class="text-muted">Public {{ notification.created | date:'d/M/yy h:mm a'}}</span>
+									<strong><span account-card account="$misc.fromID(notification.author, accounts)"></span></strong> <span class="text-muted">{{ notification.created | date:'d/M/yy h:mm a'}} <span class="small" ng-if="notification.type == 'comment_manager'">Manager only</span></span>
 								</div>
 								<div class="panel-body">
 									<h3 ng-if="notification.type != 'comment' && notification.type != 'comment_manager'">{{ notification.type | firstLetterUpperCase }}</h3>
@@ -99,7 +99,7 @@
     				</div>
     				<div ng-if="whoAmI() == 'manager'" class="panel-footer" >
 						<div class="input-group">
-							<input type="text" ng-model="commentContent" class="form-control" placeholder="Comment..">
+							<input type="text" ng-model="comment.content" class="form-control" placeholder="Comment..">
 							<div class="input-group-btn">
 								<button ng-click="updateState('comment_manager');" type="button" class="btn btn-primary">Manager</button>
 								<button ng-click="updateState('comment');" type="button" class="btn btn-default">Public</button>
