@@ -2,7 +2,7 @@ console.log("Formie Server v2");
 console.log("WARNING: Concurrency and request validation not fully implemented");
 
 var port = 8000;
-var dbip = '172.17.0.2';
+var dbip = '127.0.0.1';
 
 var Promise = require("bluebird");
 var express = require('express');
