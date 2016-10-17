@@ -168,6 +168,63 @@ module.exports = function (webServer, mongoose) {
 		});
 	});
 
+	webServer.post('/auth/register', function(req, res)
+	{
+		var validation = inspector.validate({
+			type: 'object',
+			properties: {
+				email: {type: "string"},
+				password: {type: "string"},
+				firstName: {type: "string"},
+				lastName: {type: "string"},
+				accountType: {type: "string"}
+			}
+		}, req.body);
+
+		if(!validation.valid) return res.status(500).send("request validation failed.");
+
+		function RegError(clientMessage) {
+			this.clientMessage = clientMessage;
+		}
+
+		function IsEmptyOrSpaces(str) {
+			return str === null || str.match(/^ *$/) !== null;
+		}
+
+		RegError.prototype = Object.create(Error.prototype);
+
+		//Check email
+		var account;
+		Account.find().where('email').equals(req.body.email.toLowerCase())
+		.then(result => {
+			if (result.length > 0)
+			{
+				throw new RegError('Email already existed');
+			}
+
+			if (IsEmptyOrSpaces(reg.body.email) || IsEmptyOrSpaces(reg.body.password))
+			{
+				throw new RegError('Email or password cannot be empty');
+			}
+
+			return password($scope.password).hash()
+		})
+		.then(hashResult => {
+			return $route.Account.create({email: reg.body.email, name: reg.body.firstName + ' ' + reg.body.lastName, password: hashResult, cid: "98126016", access: reg.body.accountType});
+		})
+		.then(() => {
+			res.status(200).send("Account created");
+		})
+		.catch(RegError, e => {
+			res.status(400).send(e.clientMessage);
+		})
+		.catch(e => {
+			res.status(500).send("Internal error");
+			throw e;
+		})
+
+	});
+
 	webServer.post('/auth/login', function(req, res) {
 		//validate post JSON
 		var validation = inspector.validate({

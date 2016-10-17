@@ -1,4 +1,3 @@
-<!----- not implemented yet -->
 <form class="form-horizontal">
 <div class="row">
 	<div class="col-md-5 col-md-offset-3">
@@ -8,6 +7,10 @@
 			<br>
 		</row>
 
+		<div ng-if="alert != null" class="alert alert-info">
+	  		<strong>{{alert}}</strong>
+		</div>
+
 		<row>
 		<div class="col-md-4 col-md-offset-2">
 			<h4>Account Type:</h4>
@@ -15,43 +18,50 @@
 
 		<div class="radio">
 		<div class="col-md-1 col-md-offset-1">	
-  			<label><input type="radio" name="optradio" checked>Manager</label>
+  			<label><input type="radio" ng-model="accountType.name" value="manager">Manager</label>
 		</div>
 		</div>
 		<div class="radio">
 		<div class="col-md-1 col-md-offset-1">
-  			<label><input type="radio" name="optradio">User</label>
+  			<label><input type="radio" ng-model="accountType.name" value="user">User</label>
 		</div>
 		</div>
 		</row>	
 		<br>
 
 		<div class="form-group">
-	    <label for="InputFirstName" class="col-sm-3 control-label">First Name</label>
-	    <div class="col-sm-9">
-	      <input type="text" class="form-control" id="InputFirstName" placeholder="First Name">
-	    </div>
+	    	<label for="InputFirstName" class="col-sm-3 control-label">First Name</label>
+	    	<div class="col-sm-9">
+	      		<input type="text" class="form-control" ng-model="firstName" id="InputFirstName" placeholder="First Name">
+	    	</div>
 	  </div>
 	  <div class="form-group">
-	    <label for="InputLastName" class="col-sm-3 control-label">Last Name</label>
-	    <div class="col-sm-9">
-	      <input type="text" class="form-control" id="InputLastName" placeholder="Last Name">
-	    </div>
-  		</div>
-  		<div class="form-group">
-	    <label for="InputEmail" class="col-sm-3 control-label">Email</label>
-	    <div class="col-sm-9">
-	      <input type="email" class="form-control" id="InputEmail" placeholder="Email">
-	    </div>
-  		</div>
+				<label for="InputLastName" class="col-sm-3 control-label">Last Name</label>
+				<div class="col-sm-9">
+						<input type="text" class="form-control" ng-model="lastName"  id="InputLastName" placeholder="Last Name">
+				</div>
+		</div>
+  	<div class="form-group">
+				<label for="InputEmail" class="col-sm-3 control-label">Email</label>
+				<div class="col-sm-9">
+						<input type="email" class="form-control" ng-model="email" id="InputEmail" placeholder="Email">
+				</div>
+  	</div>
+		<div class="form-group">
+				<label for="InputEmail" class="col-sm-3 control-label">Password</label>
+				<div class="col-sm-9">
+						<input type="password" class="form-control" ng-model="password" id="InputPassword" placeholder="Password">
+				</div>
+  	</div>
 
 		<br>
 		<span id="helpBlock" class="help-block">Note: An activation email will be sent out containing a link for the user to click to complete the registration process</span>
 		<div class="modal-footer">
 			<div class="form-group">
+				
 				<div class="row">
-					    <button type="button" class="btn btn-primary">Create Account</button>
-		</div>
+					    <button type="button" class="btn btn-primary" ng-click="register();">Create Account</button>
+				</div>
 		</div>
 
 	</div>

@@ -10,6 +10,10 @@ myApp.config(function($routeProvider) {
 	.when('/', {
 		templateUrl : 'pages/landing.html'
 	})
+	.when('/account/new/', {
+		templateUrl : 'pages/createAccount.html',
+		controller : 'CreateAccountController'
+	})
 	.when('/user', {
 		templateUrl : 'pages/home.html',
 		controller  : 'HomeController',
@@ -407,10 +411,48 @@ myApp.controller('mainController', function($scope, $rootScope, $http, $alert, $
 	$scope.logIn = function(){
 		$session.loginModal().result
 		.then(function(){
-			if($location.path() == "/") $location.path('/'+$rootScope.auth.account.access);
+			if($location.path() == "/")
+			 $location.path('/'+$rootScope.auth.account.access);
 			else $route.reload();
 		});
 	}
+});
+
+myApp.controller('CreateAccountController', function($scope, $request, $location, $route, $alert) {
+	$scope.firstName = '';
+	$scope.lastName = '';
+	$scope.email = '';
+	$scope.password = '';
+	$scope.alert = null;
+
+	$scope.accountType = {
+        name: 'manager'
+    };
+
+	$scope.isEmptyOrSpaces = function(str) {
+		return str === null || str.match(/^ *$/) !== null;
+	};
+
+	$scope.register = function(){
+		/*if ($scope.isEmptyOrSpaces($scope.email) || $scope.isEmptyOrSpaces($scope.password))
+		{
+			$scope.registerMessage('Email or password cannot be empty');
+			return;
+		}*/
+		$request.post('/auth/register', {email: $scope.email, password: $scope.password, firstName: $scope.firstName, lastName: $scope.lastName})
+		.then(function(){
+			registerMessage("Registion completed!");
+			$window.location.reload();
+		})
+		.catch(function(e){
+			$scope.registerMessage(e.data);
+		})
+	};
+
+	$scope.registerMessage = function(msg){
+		$scope.alert = msg;
+	}
+
 });
 
 function loginModalController($scope, $http, $rootScope, $uibModalInstance, alert, $alert, $session) {
@@ -443,6 +485,11 @@ function loginModalController($scope, $http, $rootScope, $uibModalInstance, aler
 				$alert.error('Internal problem with logging you in. Please report this');
 			}
 		})
+	}
+
+	$scope.registerAccount = function()
+	{
+		$uibModalInstance.close('loggedin');
 	}
 
 	$scope.devLoginUser = function(){
