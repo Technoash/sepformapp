@@ -1,6 +1,11 @@
 # PerForm
 
 ## Todo
+
+### bugs
+- date field value is sometimes null. the create submission route doesn't like that
+- comment field doesn't reset
+
 ### big stuff
 - ~~submit submission~~
 - ~~save and edit submission~~
