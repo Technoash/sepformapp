@@ -202,15 +202,15 @@ module.exports = function (webServer, mongoose) {
 				throw new RegError('Email already existed');
 			}
 
-			if (IsEmptyOrSpaces(reg.body.email) || IsEmptyOrSpaces(reg.body.password))
+			if (IsEmptyOrSpaces(req.body.email) || IsEmptyOrSpaces(req.body.password))
 			{
 				throw new RegError('Email or password cannot be empty');
 			}
 
-			return password($scope.password).hash()
+			return password(req.body.password).hash();
 		})
-		.then(hashResult => {
-			return $route.Account.create({email: reg.body.email, name: reg.body.firstName + ' ' + reg.body.lastName, password: hashResult, cid: "98126016", access: reg.body.accountType});
+		.then(hash => {
+			return Account.create({email: req.body.email, name: req.body.firstName + ' ' + req.body.lastName, password: hash, cid: "98126016", access: req.body.accountType});
 		})
 		.then(() => {
 			res.status(200).send("Account created");
