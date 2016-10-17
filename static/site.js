@@ -440,9 +440,8 @@ myApp.controller('CreateAccountController', function($scope, $request, $location
 			return;
 		}*/
 		$request.post('/auth/register', {email: $scope.email, password: $scope.password, firstName: $scope.firstName, lastName: $scope.lastName, accountType: $scope.accountType.name})
-		.then(function(){
-			registerMessage("Registion completed!");
-			$window.location.reload();
+		.then(function(e){
+			$scope.registerMessage("Registion completed!");
 		})
 		.catch(function(e){
 			$scope.registerMessage(e.data);
