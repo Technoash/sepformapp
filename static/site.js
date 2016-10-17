@@ -439,7 +439,7 @@ myApp.controller('CreateAccountController', function($scope, $request, $location
 			$scope.registerMessage('Email or password cannot be empty');
 			return;
 		}*/
-		$request.post('/auth/register', {email: $scope.email, password: $scope.password, firstName: $scope.firstName, lastName: $scope.lastName, accountType: $scope.accountType})
+		$request.post('/auth/register', {email: $scope.email, password: $scope.password, firstName: $scope.firstName, lastName: $scope.lastName, accountType: $scope.accountType.name})
 		.then(function(){
 			registerMessage("Registion completed!");
 			$window.location.reload();
