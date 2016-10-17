@@ -16,11 +16,19 @@
 	  		<div class="panel-heading">
     			<h3>Notifications</h3>
 			</div>
-			<div class="noteBox red">
-				<span class="onp-sl-long">Incomplete</span>
-			</div>
-			<div class="noteBox blue">
-				<span class="onp-sl-long">Saved Form - Monthly Report...</span>
+			<div class="panel-body">
+		    		<div ng-repeat-start="notification in notifications" class="noteBox returnedBlue" ng-if="notification.type == 'returned'">
+						<span class="onp-sl-long"><i>{{ $misc.fromID($misc.fromID(notification.submission, submissions).form, forms).name }}</i> was returned for editing</span>
+					</div>
+					<div class="noteBox acceptedGreen" ng-if="notification.type == 'accepted'">
+						<span class="onp-sl-long"><i>{{ $misc.fromID($misc.fromID(notification.submission, submissions).form, forms).name }}</i> was accepted</span>
+					</div>
+					<div class="noteBox declinedRed" ng-if="notification.type == 'declined'">
+						<span class="onp-sl-long"><i>{{ $misc.fromID($misc.fromID(notification.submission, submissions).form, forms).name }}</i> was declined</span>
+					</div>
+					<div ng-repeat-end class="noteBox pending" ng-if="notification.type == 'comment'">
+						<span class="onp-sl-long">A manager left a comment on <i>{{ $misc.fromID($misc.fromID(notification.submission, submissions).form, forms).name }}</i></span>
+					</div>
 			</div>
 	  	</div>
 
@@ -79,7 +87,7 @@
 		    			<h3>Resolved Submissions</h3>
 					</div>
 			  		<div class="panel-body">
-			  			<div ng-repeat="submission in submissions" go-click="submission/view/{{submission._id}}" ng-if="submission.state == 'accepted' || submission.state == 'declined'" class="noteBox red">
+			  			<div ng-repeat="submission in submissions" go-click="submission/view/{{submission._id}}" ng-if="submission.state == 'accepted' || submission.state == 'declined'" class="noteBox red" ng-class="{acceptedGreen: submission.state == 'accepted', declinedRed: submission.state == 'declined'}">
 							<span class="onp-sl-long">{{ $misc.fromID(submission.form, forms).name }}: {{ submission.created | date:'d/M/yy h:mm a'}}</span>
 						</div>
 			  		</div>

@@ -24,6 +24,19 @@
 .noteBox.pink {
 	border-left: 5px solid #ef6bff;
 }
+.noteBox.returnedBlue {
+    border-left: 5px solid #1c6ec1;
+}
+.noteBox.pending {
+    border-left: 5px solid #999;
+}
+.noteBox.acceptedGreen {
+    border-left: 5px solid #64e03c;
+}
+.noteBox.declinedRed {
+    border-left: 5px solid #ec4a4a;
+}
+
 .noteBox:first-child {
 	border-top: none;
 }
@@ -34,7 +47,7 @@
     line-height: 45px;
     padding-left: 30px;
     cursor: pointer;
-	text-transform: capitalize;
+	/*text-transform: capitalize;*/
 }
 
 [go-click] {

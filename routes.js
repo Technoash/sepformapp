@@ -223,7 +223,7 @@ module.exports = function (webServer, mongoose) {
 	});
 
 	webServer.get('/homepage', validateAccess('user'), function(req, res) {
-		var build = {forms: {}, submissions: {}};
+		var build = {forms: {}, submissions: {}, notifications: {}};
 		var exec = [];
 		exec.push(
 			Form.find({}, "_id name").where('enabled').equals(true)
@@ -235,6 +235,10 @@ module.exports = function (webServer, mongoose) {
 			Submission.find({account: req.session.account._id}, "_id form created state")
 			.then(a => {
 				build.submissions = a;
+				return Notification.find().where('submission').in(_.map(build.submissions, '_id')).sort({created: -1});
+			})
+			.then(a =>{
+				build.notifications = a;
 			})
 		)
 		Promise.all(exec)

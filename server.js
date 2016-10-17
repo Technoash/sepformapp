@@ -1,5 +1,4 @@
-console.log("Formie Server v2");
-console.log("WARNING: Concurrency and request validation not fully implemented");
+console.log("PerForm v2");
 
 var port = 8000;
 var dbip = '172.17.0.2';
@@ -20,6 +19,27 @@ mongoose.connect("mongodb://" + dbip + "/dev");
 
 //load mongdb schemas
 require('./schemas.js')(mongoose);
+
+///CREATE INITIAL ACCOUNTS (for testing)
+var password = require('password-hash-and-salt-promise');
+var Account = mongoose.model('Account');
+
+password('test').hash()
+.then(hash=>{
+	Account.find()
+	.then(a=>{
+		if(a.length == 0){
+			var names = ['alwar', 'edward', 'carol', 'paul', 'ashneil', 'tutor'];
+			for(var i = 0; i < names.length; i++){
+				Account.create({email: names[i]+"@user.com", name: "User "+names[i], password: hash, cid: "98126000", access: "user"}).then();
+				Account.create({email: names[i]+"@manager.com", name: "Manager "+names[i], password: hash, cid: "98126016", access: "manager"}).then();
+			}
+		}
+	})
+})
+
+
+///END CREATE INITIAL ACCOUNTS
 
 var webServer = express();
 
